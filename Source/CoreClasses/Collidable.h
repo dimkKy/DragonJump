@@ -1,7 +1,11 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Drawable.h"
 #include <span>
 #include <type_traits>
+#include <cassert>
 
 enum class CollisionChannel {
 	CC_None,
@@ -21,31 +25,34 @@ struct RectangleShape : private Shape
 {
 	RectangleShape() {};
 	template<class...Args>
-	RectangleShape(Args...args) : size{ args } {};
-	Vector2Df size;
+	RectangleShape(Args&...args) : 
+		halfSize{ args } 
+	{
+		assert(halfSize.x > 0.f && halfSize.y > 0.f && "size must be positive");
+	};
+	Vector2Df halfSize;
 	explicit operator bool() const
-		{ return size.operator bool(); }
+		{ return halfSize.operator bool(); }
 };
 struct CircleShape : private Shape
 {
 	CircleShape() : radiusSquared{0.f} {};
-	CircleShape(const float& _radiusSquared) : 
-		radiusSquared{ _radiusSquared } {};
-	CircleShape(const int& _radiusSquared) : 
-		radiusSquared{ static_cast<float>(_radiusSquared) } {};
+	CircleShape(const float& f) : 
+		radiusSquared{ f } 
+	{
+		assert(radiusSquared > 0.f && "radius must be positive");
+	};
 	float radiusSquared;
 	explicit operator bool() const 
 		{ return radiusSquared; }
 };
 
-/// <summary>
-/// pivot for all collidables should be at (0.5, 0.5)
-/// </summary>
+// pivot for all collidables should be at (0.5, 0.5)
 class CollidableBase : public virtual Drawable 
 {
 public:
 	virtual bool IsActive() = 0;
-	virtual void ReceiveCollision(CollidableBase& other) = 0;
+	virtual void ReceiveCollision(CollidableBase& other) {};
 	virtual CollisionChannel GetCollisionChannel() const = 0;
 	virtual bool GetCollisionResponse(CollisionChannel channel) const = 0;
 protected:
@@ -63,6 +70,8 @@ public:
 	//collidable was inited properly aka has collision
 	virtual bool IsActive() override 
 		{ return bIsActive && collisionInfo; };
+	TShape GetCollisionInfo() const 
+		{ return collisionInfo; }
 protected:
 	template<class...Args>
 	Collidable(const Args&...args):
@@ -70,4 +79,17 @@ protected:
 	TShape collisionInfo;
 };
 
-#include "Collidable.inl"
+template <typename TDerived>
+struct is_base_of_any_collidable
+{
+	template<typename TShape>
+	static constexpr std::true_type is_collidable(const volatile Collidable<TShape>&);
+	static constexpr std::false_type is_collidable(...);
+	using value = decltype(is_collidable(std::declval<TDerived&>()));
+};
+// no ckeck for TShape = Shape here
+template<typename TDerived>
+concept AnyCollidable = is_base_of_any_collidable<TDerived>::value::value;
+
+extern template class Collidable<CircleShape>;
+extern template class Collidable<RectangleShape>;

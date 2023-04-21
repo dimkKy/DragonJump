@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #include "LifesDisplayer.h"
 #include "SpriteLoader.h"
 #include <cassert>

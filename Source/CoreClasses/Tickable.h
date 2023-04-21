@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Drawable.h"
 
 class Tickable : public virtual Drawable
@@ -6,14 +9,55 @@ class Tickable : public virtual Drawable
 public:
 	//dispatcher is responsible for checking isActive
 	virtual void ReceiveTick(float deltaTime) = 0;
-	[[nodiscard]] virtual Vector2Df GetCurrentVelocity() const 
-		{ return currentVelocity; };
+	[[nodiscard]] virtual Vector2Df GetVelocity() const 
+		{ return velocity; };
 	[[nodiscard]] virtual float GetMaxTickDeltaTime() const 
 		{ return 0.f; };
+	template<typename TTickable>
+		requires std::is_base_of<Tickable, TTickable>::value
+	static void DispatchTicks(float deltaTime, std::vector<std::shared_ptr<TTickable>>& vec) {
+		for (auto& tickable : vec) {
+			if (tickable->IsActive()) {
+				tickable->ReceiveTick(deltaTime);
+			}		
+		}
+	}
+
+	template<typename FTickable, typename...STickable>
+		requires std::is_base_of<Tickable, FTickable>::value &&
+		((std::is_base_of<Tickable, STickable>::value) &&...)
+		static void DispatchTicks(float deltaTime, std::vector<std::shared_ptr<FTickable>>& vec,
+			std::vector<std::shared_ptr<STickable>>&...vecs) {
+		for(auto & tickable : vec) {
+			if (tickable->IsActive()) {
+				tickable->ReceiveTick(deltaTime);
+			}
+		}
+		DispatchTicks(deltaTime, vecs...);
+	}
+
+	/*template<class TDrawable>
+		requires std::is_base_of<Drawable, TDrawable>::value
+	static void DispatchDrawcalls(float cameraVerticalOffset, std::vector<std::shared_ptr<TDrawable>>& vec) {
+		for (auto& drawable : vec) {
+			drawable->DrawIfActive(cameraVerticalOffset);
+		}
+	}
+	template<typename FDrawable, typename...SDrawable>
+		requires std::is_base_of<Drawable, FDrawable>::value &&
+	((std::is_base_of<Drawable, SDrawable>::value) &&...)
+		static void DispatchDrawcalls(float cameraVerticalOffset, std::vector<std::shared_ptr<FDrawable>>& vec,
+			std::vector<std::shared_ptr<SDrawable>>&...vecs) {
+		for (auto& drawable : vec) {
+			drawable->DrawIfActive(cameraVerticalOffset);
+		}
+		DispatchDrawcalls(cameraVerticalOffset, vecs...);
+	}*/
+
 protected:
 	template<class...Args>
 	Tickable(const Args&...args) : 
-		currentVelocity{ args... } {};
-	Vector2Df currentVelocity;
+		velocity{ args... } {};
+	Vector2Df velocity;
 };
 

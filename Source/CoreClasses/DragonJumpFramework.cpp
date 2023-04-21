@@ -1,5 +1,5 @@
 #include "DragonJumpFramework.h"
-//#include <iostream>
+#include <iostream>
 #include <cassert>
 #include <algorithm>
 #include <cmath>
@@ -7,14 +7,12 @@
 #include <functional>
 #include <filesystem>
 #include <string>
+#include <regex>
 #include "wtypes.h"
 #include "SpriteLoader.h"
-#include "Drawable.h"
-#include "Collidable.h"
 #include "Platform.h"
 #include "PlayerDoodle.h"
 #include "Projectile.h"
-#include "Monster.h"
 #include "Hole.h"
 #include "Button.h"
 #include "Ability.h"
@@ -22,14 +20,13 @@
 #include "TickableMonster.h"
 #include "IntDisplayer.h"
 #include "LifesDisplayer.h"
-#include <regex>
-
+#include "Collider.h"
 
 DragonJumpFramework::DragonJumpFramework(bool bStartWithMenu, int sizeX, int sizeY, bool _bFullscreen) :
 	screenSize{ sizeX, sizeY }, bFullscreen{ _bFullscreen }, bWithMenu{ bStartWithMenu }, bInMenu{ bStartWithMenu }, 
 	ticksCount{ 0 }, tickFunction { &DragonJumpFramework::BeginPlay }, spriteScale{ 1.f }, doodleInputDirection{ 0 },
-	jumpHeight{ 0.f }, inputImpulseAbs{ 25.f }, platformsInScreenWidth{ 5.5f }, lifesLeft{ 0 }, 
-	distancePassed{ 0.f }, monstersKilledSinceAbilitySpawn{ 0 }
+	inputImpulseAbs{ 25.f }, platformsInScreenWidth{ 5.5f }, lifesLeft{ 0 }, distancePassed{ 0.f }, 
+	monstersKilledSinceAbilitySpawn{ 0 }
 {
 	if (!bFullscreen) {
 		if (sizeX < 300)
@@ -43,40 +40,34 @@ bool DragonJumpFramework::IsInScreenArea(const Vector2Df& pos, const Vector2Df& 
 	bool bCheckSides, bool bCheckUpper) const
 {
 	int vertical{ IsOutOfSideBorder(pos, size, true) };
+	bool isInVertical{ (!bCheckSides || IsOutOfSideBorder(pos, size) == 0) };
+	bool test2{ (bCheckUpper ? vertical == 0 : vertical < 1) };
 	return (!bCheckSides || IsOutOfSideBorder(pos, size) == 0) && 
-		(bCheckUpper ? vertical < -1 : vertical == 0);
-	return false;
+		(bCheckUpper ? vertical == 0 : vertical < 1);
 }
 
 int DragonJumpFramework::IsOutOfSideBorder(const Vector2Df& pos, const Vector2Df& size, bool yAxis) const
 {
-	if (!size.y)
-		return 0;
-	Vector2Df border{ pos };
-	//template with shapes instead?
-	if (size.x) {
-		border = yAxis ? (border.y - size.y, border.y + size.y) : (border.x - size.x, border.y + size.x);
+	assert(size.x >= 0.f && size.y >= 0.f && "size must be positive");
+	Vector2Df border{};
+	if (yAxis) {
+		border.x = pos.y - size.y * 0.5f;
+		border.y = pos.y + size.y * 0.5f;
 	}
 	else {
-		float radius{ sqrtf(size.y) };
-		border = yAxis ? (border.y - radius, border.y + radius) : (border.x - radius, border.y + radius);
+		border.x = pos.x - size.x * 0.5f;
+		border.y = pos.x + size.x * 0.5f;
 	}
-	return (border.y >= 0.f) - (border.x <= yAxis ? screenSize.y : screenSize.x);
+	return static_cast<bool>(border.y >= 0.f) - 
+		static_cast<bool>(border.x <= (yAxis ? screenSize.y : screenSize.x));
 }
 
 int DragonJumpFramework::DoesSpriteTouchBorder(const Vector2Df& pos, const Vector2Df& size, bool yAxis) const
 {
-	if (!size.y)
-		return 0;
+	assert(size.x >= 0.f && size.y >= 0.f && "size must be positive");
 	Vector2Df border{ pos };
 	//template with shapes instead?
-	if (size.x) {
-		border = yAxis ? (border.y - size.y, border.y + size.y) : (border.x - size.x, border.y + size.x);
-	}
-	else {
-		float radius{ sqrtf(size.y) };
-		border = yAxis ? (border.y - radius, border.y + radius) : (border.x - radius, border.y + radius);
-	}
+	border = yAxis ? (border.y - size.y, border.y + size.y) : (border.x - size.x, border.y + size.x);
 	float screenB{ yAxis ? static_cast<float>(screenSize.y) : static_cast<float>(screenSize.x) };
 	return (border.x < 0.f && border.y > 0.f) - (border.x < screenB && border.y > screenB);
 }
@@ -116,28 +107,17 @@ bool DragonJumpFramework::Init()
 		return false;
 	}
 	if(bWithMenu)
-		playerDoodle = std::make_shared<PlayerDoodle>(*this, platfromSize.x, screenSize.y + platfromSize.y);
+		playerDoodle = std::make_shared<PlayerDoodle>(*this, Vector2Df{ platfromSize.x, screenSize.y + platfromSize.y });
 	else
-		playerDoodle = std::make_shared<PlayerDoodle>(*this, screenSize.x >> 1, screenSize.y + platfromSize.y);
+		playerDoodle = std::make_shared<PlayerDoodle>(*this, Vector2Df{ screenSize.x >> 1, screenSize.y + platfromSize.y });
 	if (!playerDoodle->IsActive()) {
 		DJLog("playerDoodle init unsuccessful, aborting");
 		return false;
 	}
-	/*if (bWithMenu) {
-		if (!GetSprite(SpritePaths::startButton, tempSprite)) {
-			DJLog("startButton sprite not found, aborting");
-			return false;
-		}
-		if (!GetSprite(SpritePaths::startButtonPressed, tempSprite)) {
-			DJLog("startButtonPressed sprite not found, aborting");
-			return false;
-		}
-	}*/
 	if (!CreateUI() && bWithMenu) {
 		DJLog("UI creation unsuccessfull, aborting");
 		return false;
 	}
-	jumpHeight = playerDoodle->GetCalculateJumpDistance();
 	srand(static_cast<unsigned int>(time(NULL)));
 	return true;
 }
@@ -200,7 +180,8 @@ void DragonJumpFramework::onKeyReleased(FRKey key)
 
 bool DragonJumpFramework::GetSprite(const std::string& path, std::shared_ptr<Sprite>& outSprite) 
 {
-	if (auto result{ loadedSprites.find(path) }; result != loadedSprites.end()) {
+	if (auto result{ loadedSprites.find(path) }; 
+		result != loadedSprites.end()) {
 		outSprite = result->second;
 		return true;
 	}
@@ -210,7 +191,8 @@ bool DragonJumpFramework::GetSprite(const std::string& path, std::shared_ptr<Spr
 		if (Sprite* possibleSprite{ createSprite(path.c_str()) }) {
 			int tempX, tempY;
 			getSpriteSize(possibleSprite, tempX, tempY);
-			setSpriteSize(possibleSprite, static_cast<int>(tempX * spriteScale + 0.5f), static_cast<int>(tempY * spriteScale + 0.5f));
+			setSpriteSize(possibleSprite, static_cast<int>(tempX * spriteScale + 0.5f), 
+				static_cast<int>(tempY * spriteScale + 0.5f));
 			std::shared_ptr<Sprite> shared{ possibleSprite, destroySprite };
 			loadedSprites.insert({ path, shared });
 			outSprite =  shared;
@@ -296,10 +278,10 @@ void DragonJumpFramework::TryAddEntities()
 {
 	std::random_device seed;
 	std::mt19937 rnd(seed());
-	std::uniform_real_distribution<float> dist(0.35f, 0.55f);
+	std::uniform_real_distribution<float> dist(0.55f, 0.85f);
 	std::uniform_int_distribution<int> prcnt(1, INT_MAX);
 	while (lastPlatformPos.y > screenSize.y * -0.3f) {
-		lastPlatformPos.y -= dist(rnd) * jumpHeight;
+		lastPlatformPos.y -= dist(rnd) * PlayerDoodle::jumpHeight;
 		lastPlatformPos.x = std::fmodf(lastPlatformPos.x + dist(rnd) * screenSize.x, 
 			static_cast<float>(screenSize.x));
 		Platform* newP{ SpawnPlatform(lastPlatformPos, PlatformType::PT_Default) };
@@ -354,15 +336,16 @@ MonsterType DragonJumpFramework::GetMonsterType(int seed)
 	if (seed % 17 == 0 || seed % 43 == 0) {
 		return MonsterType::MT_Movable;
 	}
+	return MonsterType::MT_COUNT;
 }
 
 void DragonJumpFramework::SpawnStartingScene()
 {
 	Vector2Df platPos{ playerDoodle->GetPosition() };
-	platPos.y -= jumpHeight * 0.8f;
+	platPos.y -= PlayerDoodle::jumpHeight;
 	if (bInMenu) {
 		SpawnPlatform(platPos, PlatformType::PT_Default);
-		platPos.y -= jumpHeight * 0.8f;
+		platPos.y -= PlayerDoodle::jumpHeight;
 		SpawnPlatform(platPos, PlatformType::PT_Weak);
 	}
 	else {
@@ -374,14 +357,14 @@ void DragonJumpFramework::SpawnStartingScene()
 			spawnPositionX += platformWidth;
 		}
 		SpawnAbility(*platforms.back().get(), AbilityType::AT_Jet);
-		SpawnPlatform({ screenSize.x * 0.25f, platPos.y -= jumpHeight * 0.5f}, PlatformType::PT_Invisible);
-		SpawnPlatform({ screenSize.x * 0.15f, platPos.y -= jumpHeight * 0.5f }, PlatformType::PT_Trampoline);
-		SpawnMonster(
-			*SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= jumpHeight * 0.5f }, PlatformType::PT_SelfDestuct),
+		SpawnPlatform({ screenSize.x * 0.25f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f}, PlatformType::PT_Invisible);
+		SpawnPlatform({ screenSize.x * 0.15f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f }, PlatformType::PT_Trampoline);
+		/*SpawnMonster(
+			*SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f }, PlatformType::PT_SelfDestuct),
 			MonsterType::MT_Hole);
 		SpawnMonster(
-			*SpawnPlatform({ screenSize.x * 0.75f, platPos.y -= jumpHeight * 0.5f }, PlatformType::PT_Trampoline), 
-			MonsterType::MT_Movable);
+			*SpawnPlatform({ screenSize.x * 0.75f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f }, PlatformType::PT_Trampoline),
+			MonsterType::MT_Movable);*/
 		lastPlatformPos.y = platPos.y;
 		TryAddEntities();
 	}
@@ -412,12 +395,8 @@ void DragonJumpFramework::SubstepWorldTicks(float deltaTime)
 
 void DragonJumpFramework::DispatchWorldTicks(float deltaTime)
 {
-	for (auto& tickable : tickablePlatforms)
-		if (tickable->IsActive())
-			tickable->ReceiveTick(deltaTime);
-	for (auto& tickable : tickableMonsters)
-		if (tickable->IsActive())
-			tickable->ReceiveTick(deltaTime);
+	Tickable::DispatchTicks(deltaTime, 
+		tickablePlatforms, tickableMonsters);
 }
 
 void DragonJumpFramework::SubstepPlayerTickAndCollisions(float deltaTime, bool dispatchInput)
@@ -442,33 +421,20 @@ void DragonJumpFramework::DispatchPlayerTickAndCollisions(float deltaTime, bool 
 	}
 	playerDoodle->ReceiveTick(deltaTime);
 	DetectDispatchPlayerCollisions();
-	if (int offset{ screenSize.x * playerDoodle->CheckOutOfSideBorder() }) {
-		Vector2Df playerPos{ playerDoodle->GetPosition() };
-		playerDoodle->SetPosition({ playerPos.x - offset, playerPos.y });
+	playerDoodle->GetCollisionInfo().halfSize.x;
+	if (int offset{ DoesSpriteTouchBorder(playerDoodle->GetPosition(), 
+		playerDoodle->GetCollisionInfo().halfSize) }) {
+		Vector2Df pos{ playerDoodle->GetPosition() };
+		playerDoodle->SetPosition({ pos.x - offset * screenSize.x, pos.y });
 		DetectDispatchPlayerCollisions();
-		playerDoodle->SetPosition(playerPos);
+		playerDoodle->SetPosition(pos);
 	}
 }
 
 void DragonJumpFramework::DetectDispatchPlayerCollisions()
 {
-	for (auto& ability : abilities) {
-		Collider::DetectDispatchCollision(*ability, *playerDoodle);
-	}
-	for (auto& hole : holes) {
-		Collider::DetectDispatchCollision(*hole, *playerDoodle);
-	}
-	for (auto& monster : tickableMonsters) {
-		Collider::DetectDispatchCollision(*monster, *playerDoodle);
-	}
-	if (playerDoodle->IsStanding())
-		return;
-	for (auto& platform : platforms) {
-		Collider::DetectDispatchCollision(*platform, *playerDoodle);
-	}
-	for (auto& platform : tickablePlatforms) {
-		Collider::DetectDispatchCollision(*platform, *playerDoodle);
-	}
+	Collider::DispatchCollisions(*playerDoodle, 
+		abilities, holes, tickableMonsters, platforms, tickablePlatforms);
 }
 
 void DragonJumpFramework::SubstepProjectilesTicksAndCollisions(float deltaTime)
@@ -483,55 +449,24 @@ void DragonJumpFramework::SubstepProjectilesTicksAndCollisions(float deltaTime)
 
 void DragonJumpFramework::DispatchProjectilesTicksAndCollisions(float deltaTime)
 {
-	assert(deltaTime <= Projectile::GetMaxTickDeltaTimeStatic() && "deltaTime is too high, use SubstepProjectilesTicksAndCollisions");
-	for (auto& projectile : projectiles) {
-		if (projectile->IsActive()) {
-			projectile->ReceiveTick(deltaTime);
-		}
-	}
-	//vectorShared<Collidable> vec;
-	//std::span<const std::shared_ptr<Collidable>>{vec};
-	//Collider::DetectCollisions(std::span{ projectiles }, std::span{ holes });
-	vectorShared<Vector2Df> test;
-	//std::span<const std::shared_ptr<Collidable>>{vec};
-	//Collider::DetectCollisions(std::span{ test }, std::span{ holes });
-	/*for (auto& projectile : projectiles) {
-		for (auto& hole : holes) {
-			if (projectile->IsActive() && hole->IsActive() && projectile->DetectCollision(*hole)) {
-				hole->ReceiveCollision(*projectile);
-				projectile->ReceiveCollision(*hole);
-				break;
-			}
-		}
-		for (auto& monster : tickableMonsters) {
-			if (projectile->IsActive() && monster->IsActive() && projectile->DetectCollision(*monster)) {
-				monster->ReceiveCollision(*projectile);
-				projectile->ReceiveCollision(*monster);
-				break;
-			}
-		}
-	}*/
+	assert(deltaTime <= Projectile::GetMaxTickDeltaTimeStatic() 
+		&& "deltaTime is too high, use SubstepProjectilesTicksAndCollisions");
+	Tickable::DispatchTicks(deltaTime, projectiles);
+	Collider::DispatchCollisions(projectiles, holes);
+	Collider::DispatchCollisions(projectiles, tickableMonsters);
 }
 
 bool DragonJumpFramework::MenuTick()
 {
-	unsigned int oldTicksCount{ ticksCount };
-	ticksCount = getTickCount();
-	float deltaTime{ static_cast<float>(ticksCount - oldTicksCount) * 0.001f };
+	float deltaTime{ GetDeltaTime() };
+	SubstepWorldTicks(deltaTime);
 	SubstepPlayerTickAndCollisions(deltaTime, false);
 	drawTestBackground();
-	//TODO
-	for (auto& drawable : platforms)
-		drawable->DrawIfActive(0.f);
-	for (auto& drawable : tickablePlatforms)
-		drawable->DrawIfActive(0.f);
-	
+	Drawable::DispatchDrawcalls(0.f, platforms, tickablePlatforms);
 	if (!playerDoodle->DrawIfActive(0.f)) {
 		tickFunction = &DragonJumpFramework::BeginPlay;
 	}
-	for (auto& drawable : menuUIs)
-		drawable->DrawIfActive(0.f);
-	//std::for_each(menuUIs.begin(), menuUIs.end(), [](auto& p) { p.get()->DrawIfActive(0); });
+	Drawable::DispatchDrawcalls(0.f, menuUIs);
 	return false;
 }
 
@@ -560,35 +495,22 @@ bool DragonJumpFramework::BeginPlay()
 
 bool DragonJumpFramework::GameplayTick()
 {
-	unsigned int oldTicksCount{ ticksCount };
-	ticksCount = getTickCount();
-	float deltaTime{ static_cast<float>(ticksCount - oldTicksCount) * 0.001f };
-
+	float deltaTime{ GetDeltaTime() };
 	SubstepWorldTicks(deltaTime);
 	SubstepProjectilesTicksAndCollisions(deltaTime);
 	SubstepPlayerTickAndCollisions(deltaTime, true);
-	
 	float cameraOffset{ 0.f };
 	float playerPosY{ playerDoodle->GetPosition().y };
 	if (float screenhalfY{ static_cast<float>(screenSize.y) * 0.5f }; playerDoodle->IsActive() && 
-		playerPosY <= screenhalfY && playerDoodle->GetCurrentVelocity().y <= 0.f) {
+		playerPosY <= screenhalfY && playerDoodle->GetVelocity().y <= 0.f) {
 		cameraOffset = screenhalfY - playerPosY + 0.5f;
 		distancePassed += cameraOffset;
 		lastPlatformPos.y += cameraOffset;
 		TryAddEntities();
 	}
 	drawTestBackground();
-	for (auto& drawable : holes)
-		drawable->DrawIfActive(cameraOffset);
-	for (auto& drawable : platforms)
-		drawable->DrawIfActive(cameraOffset);
-	for (auto& drawable : abilities)
-		drawable->DrawIfActive(cameraOffset);
-	for (auto& drawable : tickablePlatforms)
-		drawable->DrawIfActive(cameraOffset);
-	for (auto& drawable : tickableMonsters)
-		drawable->DrawIfActive(cameraOffset);
-	
+	Drawable::DispatchDrawcalls(cameraOffset, holes, 
+		platforms, abilities, tickablePlatforms, tickableMonsters);
 	if (!playerDoodle->DrawIfActive(cameraOffset)) {
 		if (lifesLeft > 0 && playerDoodle->IsActive()) {
 			lifesLeft -= 1;
@@ -606,22 +528,23 @@ bool DragonJumpFramework::GameplayTick()
 			tickableMonsters.clear();
 			tickablePlatforms.clear();
 			projectiles.clear();
-			abilities.clear();
-			
+			abilities.clear();	
 		}
 	}
-	for (auto& drawable : projectiles)
-		drawable->DrawIfActive(cameraOffset);
-
 	if (bInMenu) {
-		for (auto& drawable : menuUIs)
-			drawable->DrawIfActive(cameraOffset);
+		Drawable::DispatchDrawcalls(cameraOffset, projectiles, menuUIs);
 	}
 	else {
-		for (auto& drawable : gametimeUIs)
-			drawable->DrawIfActive(cameraOffset);
+		Drawable::DispatchDrawcalls(cameraOffset, projectiles, gametimeUIs);
 	}
 	return false;
+}
+
+float DragonJumpFramework::GetDeltaTime()
+{
+	unsigned int oldTicksCount{ ticksCount };
+	ticksCount = getTickCount();
+	return static_cast<float>(ticksCount - oldTicksCount) * 0.001f;
 }
 
 Platform* DragonJumpFramework::SpawnPlatform(Vector2Df pos, PlatformType type)
@@ -629,13 +552,7 @@ Platform* DragonJumpFramework::SpawnPlatform(Vector2Df pos, PlatformType type)
 	assert(pos.x >= 0.f && pos.x <= screenSize.x && pos.y <= screenSize.y 
 		&& "attempted spawn outside screen size");
 	float platformHalfSize{ screenSize.x / platformsInScreenWidth * 0.5f };
-	if (pos.x < platformHalfSize) {
-		pos.x = platformHalfSize;
-	}
-	else {
-		if (pos.x > screenSize.x - platformHalfSize)
-			pos.x = screenSize.x - platformHalfSize;
-	}
+	pos.x = std::clamp(pos.x, platformHalfSize, screenSize.x - platformHalfSize);
 	if (type == PlatformType::PT_Default) {
 		for (auto& platform : platforms) {
 			if (!platform->IsActive() && platform->Reactivate(pos)) {
@@ -643,7 +560,7 @@ Platform* DragonJumpFramework::SpawnPlatform(Vector2Df pos, PlatformType type)
 			}
 		}
 		if (auto t{ std::make_shared<Platform>(*this,pos) }; 
-			t.get()->IsActive()) {
+			t->IsActive()) {
 			platforms.push_back(t);
 			return t.get();
 		}
@@ -656,7 +573,7 @@ Platform* DragonJumpFramework::SpawnPlatform(Vector2Df pos, PlatformType type)
 			}
 		}
 		if (auto t{ std::make_shared<AnimatedPlatform>(*this, pos, type) };
-			t.get()->IsActive()) {
+			t->IsActive()) {
 			tickablePlatforms.push_back(t);
 			return t.get();
 		}
@@ -666,17 +583,17 @@ Platform* DragonJumpFramework::SpawnPlatform(Vector2Df pos, PlatformType type)
 
 MonsterBase* DragonJumpFramework::SpawnMonster(const Platform& target, MonsterType type)
 {
-	//Platform* outPlatform{ nullptr };
 	Vector2Df pos{ target.GetPosition() };
-	assert(pos.x >= 0.f && pos.x <= screenSize.x && pos.y <= screenSize.y && "attempted spawn outside screen size");
-	target.GetStandingPointY(pos.x, pos.y);
+	assert(pos.x >= 0.f && pos.x <= screenSize.x && 
+		pos.y <= screenSize.y && "attempted spawn outside screen size");
+	//target.GetStandingPointY(pos.x, pos.y);
 	if (type == MonsterType::MT_Hole) {
 		for (auto& monster : holes) {
-			if (!monster->IsActive() && monster->Reactivate(pos))
+			if (!monster->IsActive() && monster->Reactivate(pos)) {
 				return monster.get();
+			}
 		}
-		if (auto t{ std::make_shared<Hole>(*this,pos) };
-			t.get()->IsActive()) {
+		if (auto t{ std::make_shared<Hole>(*this,pos) }; t->IsActive()) {
 			holes.push_back(t);
 			return t.get();
 		}
@@ -688,7 +605,7 @@ MonsterBase* DragonJumpFramework::SpawnMonster(const Platform& target, MonsterTy
 				return monster.get();
 		}
 		if (auto t{ std::make_shared<TickableMonster>(*this, pos, type) };
-			t.get()->IsActive()) {
+			t->IsActive()) {
 			tickableMonsters.push_back(t);
 			return t.get();
 		}
@@ -696,18 +613,13 @@ MonsterBase* DragonJumpFramework::SpawnMonster(const Platform& target, MonsterTy
 	return nullptr;
 }
 
-/*Monster* DragonJumpFramework::SpawnMonster(const Platform& target, MonsterType type)
-{
-	return nullptr;
-}*/
-
 Projectile* DragonJumpFramework::SpawnProjectile(const Vector2Df& target)
 {
 	for (auto& projectile : projectiles) {
 		if (!projectile->IsActive() && projectile->Reactivate(target))
 			return projectile.get();
 	}
-	if (auto t{ std::make_shared<Projectile>(*this, target) }; t.get()->IsActive()) {
+	if (auto t{ std::make_shared<Projectile>(*this, target) }; t->IsActive()) {
 		projectiles.push_back(t);
 		return t.get();
 	}
@@ -724,7 +636,7 @@ Ability* DragonJumpFramework::SpawnAbility(const Platform& platform, AbilityType
 			return ability.get();
 		}
 	}
-	if (auto t{ std::make_shared<Ability>(*this, type, pos) }; t.get()->IsActive()) {
+	if (auto t{ std::make_shared<Ability>(*this, type, pos) }; t->IsActive()) {
 		abilities.push_back(t);
 		monstersKilledSinceAbilitySpawn -= 5;
 		return t.get();
@@ -735,18 +647,18 @@ Ability* DragonJumpFramework::SpawnAbility(const Platform& platform, AbilityType
 bool DragonJumpFramework::CreateUI()
 {
 	if (auto t{ std::make_shared<IntDisplayer>(
-		*this, Vector2Df{screenSize.x, 0}) }; t.get()->IsActive()) {
+		*this, Vector2Df{screenSize.x, 0}) }; t->IsActive()) {
 		gametimeUIs.push_back(t);
 	}
 	if (auto t{ std::make_shared<LifesDisplayer>(
-		*this, Vector2Df{0.f}) }; t.get()->IsActive()) {
+		*this, Vector2Df{0.f}) }; t->IsActive()) {
 		gametimeUIs.push_back(t);
 	}
 	if (!bWithMenu)
 		return true;
 	if (auto t{ std::make_shared<Button>(
 		*this, Vector2Df{ screenSize.x * 0.6f, screenSize.y * 0.5f}, 
-		SpritePaths::startButton) }; t.get()->IsActive()) {
+		SpritePaths::startButton) }; t->IsActive()) {
 		menuUIs.push_back(t);
 		t->onClicked = std::bind(&DragonJumpFramework::OnStartButtonClicked, this);
 		return true;

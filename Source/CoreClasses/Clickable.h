@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Drawable.h"
 
 class Clickable : public virtual Drawable

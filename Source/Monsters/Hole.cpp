@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #include "Hole.h"
 #include "PlayerDoodle.h"
 #include "SpriteLoader.h"
@@ -7,8 +9,8 @@ Hole::Hole(DragonJumpFramework& _framework, const Vector2Df& _position) :
 	Drawable(_framework, _position), Monster(MonsterType::MT_Hole)
 {
 	if (framework.GetSpriteInfo(SpritePaths::hole, sprite)) {
-		collisionInfo.radiusSquared = sprite.offset.LengthSquared() * 0.2f;
 		sprite.offset *= 0.5f;
+		collisionInfo.radiusSquared = sprite.offset.LengthSquared() * 0.25f;
 	}
 	else {
 		bIsActive = false;

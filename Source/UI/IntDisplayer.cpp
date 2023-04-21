@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #include "IntDisplayer.h"
 #include "SpriteLoader.h"
 #include <string>

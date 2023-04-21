@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #pragma once
 
 #include <map>
@@ -26,11 +28,12 @@ enum class AbilityType;
 #define DJLog(...) ((void)0)
 #else
 #include <iostream>
-inline void DebugMsg(const char* out) {
-	std::cout << out << std::endl;
+template<typename... Args>
+void DebugMsg(Args&&... args)
+{
+    (std::cout << ... << args) << '\n';
 }
 #define DJLog(...) DebugMsg(__VA_ARGS__)
-
 #endif
 
 struct Vector2D {
@@ -114,7 +117,7 @@ struct Vector2Df {
 		y /= length;
 	}
 	bool IsPointInsideRectangle(const Vector2Df& leftUpper, const Vector2Df& rightLower) const 
-		{ return x >= leftUpper.x && x <= leftUpper.x && y >= leftUpper.y && y <= rightLower.y; }
+		{ return x >= leftUpper.x && x <= rightLower.x && y >= leftUpper.y && y <= rightLower.y; }
 
 	Vector2Df ToUnit() const
 		{ return *this / sqrtf(LengthSquared()); }
@@ -252,6 +255,7 @@ public:
 	[[nodiscard]] SpriteInfo GetSpriteInfo(const std::string& path);
 	[[nodiscard]] SpriteInfo GetSpriteInfo(const char* path)
 		{ return GetSpriteInfo(std::string{ path }); };
+
 	[[nodiscard]] bool GetSpriteInfo(const std::string& path, SpriteInfo& spriteInfo);
 	[[nodiscard]] bool GetSpriteInfo(const char* path, SpriteInfo& spriteInfo)
 		{ return GetSpriteInfo(std::string{ path }, spriteInfo); };
@@ -259,6 +263,7 @@ public:
 	[[nodiscard]] std::vector<SpriteInfo> GetNumberedSprites(const std::string& pathBase);
 	[[nodiscard]] std::vector<SpriteInfo> GetNumberedSprites(const char* pathBase)
 		{ return GetNumberedSprites(std::string{ pathBase }); };
+
 	[[maybe_unused]] bool GetNumberedSprites(const std::string& pathBase, std::vector<SpriteInfo>& vec, int index = 0);
 	[[maybe_unused]] bool GetNumberedSprites(const char* pathBase, std::vector<SpriteInfo>& vec, int index = 0)
 		{ return GetNumberedSprites(std::string{ pathBase }, vec, index); };
@@ -279,17 +284,21 @@ public:
 	[[nodiscard]] int IsOutOfSideBorder(const Vector2Df& pos, const Vector2Df& size, bool yAxis = false) const;
 	[[nodiscard]] int IsOutOfSideBorder(const Vector2Df& pos, const std::shared_ptr<Sprite>& sprite, bool yAxis = false) const
 		{ return IsOutOfSideBorder(pos, Vector2Df{ GetSpriteSize(sprite) }, yAxis); }
+
 	[[nodiscard]] int DoesSpriteTouchBorder(const Vector2Df& pos, const Vector2Df& size, bool yAxis = false) const;
 protected:
 	virtual void PreInit(int& width, int& height, bool& fullscreen) override;
 	[[nodiscard]] virtual bool Init() override;
-	[[nodiscard]] virtual bool Tick() override { return std::invoke(this->tickFunction, this); };
-	virtual const char* GetTitle() override { return "dimkKy"; };
+	[[nodiscard]] virtual bool Tick() override 
+		{ return std::invoke(this->tickFunction, this); };
+	virtual const char* GetTitle() override 
+		{ return "dimkKy"; };
 	virtual void Close() override {};
 	//
 	[[nodiscard]] bool MenuTick();
 	[[nodiscard]] bool BeginPlay();
 	[[nodiscard]] bool GameplayTick();
+	[[nodiscard]] float GetDeltaTime();
 	//
 	virtual void onMouseMove(int x, int y, int xRelative, int yRelative) override;
 	virtual void onMouseButtonClick(FRMouseButton button, bool bReleased) override;
@@ -304,9 +313,14 @@ protected:
 	[[nodiscard]] MonsterType GetMonsterType(int seed);
 	//templated monster / platform ?
 	[[maybe_unused]] Platform* SpawnPlatform(Vector2Df pos, PlatformType type);
+	[[maybe_unused]] Ability* SpawnAbility(const Platform& target, AbilityType type);
+	//
 	[[maybe_unused]] MonsterBase* SpawnMonster(const Platform& target, MonsterType type);
 	[[maybe_unused]] Projectile* SpawnProjectile(const Vector2Df& target);
-	[[maybe_unused]] Ability* SpawnAbility(const Platform& target, AbilityType type);
+
+	/*template<class TCollidable>
+		requires
+	void CorrectSpawnPosition(TCollidable& target, const Vector2Df& offset);*/
 		
 	//void DispatchPlayerTickAndCollision_Menu(float deltaTime);
 	
@@ -327,7 +341,6 @@ protected:
 	float spriteScale;
 
 	int doodleInputDirection;
-	float jumpHeight;
 	float inputImpulseAbs;
 	float platformsInScreenWidth;
 	

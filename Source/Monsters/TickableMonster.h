@@ -1,8 +1,11 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Monster.h"
 #include "Tickable.h"
 
-class TickableMonster : public Monster<RectangleShape>, public virtual Tickable
+class TickableMonster : public Monster<RectangleShape>, public Tickable
 {
 public:
 	TickableMonster(DragonJumpFramework& _framework, const Vector2Df& pos, MonsterType _type);
@@ -19,6 +22,7 @@ public:
 
 protected:
 	[[maybe_unused]] virtual bool DrawIfActive_Internal() override;
+	[[nodiscard]] float GetAnimOffsetY() const;
 	std::vector<SpriteInfo> spriteInfos;
 	int spriteToDraw;
 	float knockoutAnimationDuration;
@@ -29,4 +33,3 @@ protected:
 
 	static const float movableMonsterXSpeed;
 };
-

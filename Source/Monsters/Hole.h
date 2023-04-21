@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Monster.h"
 
 class Hole : public Monster<CircleShape>

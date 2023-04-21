@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Clickable.h"
 #include <functional>
 

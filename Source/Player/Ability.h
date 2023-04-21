@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Collidable.h"
 
 enum class AbilityType {

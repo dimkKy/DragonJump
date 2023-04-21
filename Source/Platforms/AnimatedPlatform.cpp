@@ -1,16 +1,10 @@
+// by Dmitry Kolontay
+
 #include "AnimatedPlatform.h"
 #include "SpriteLoader.h"
 #include "PlayerDoodle.h"
 #include <cassert>
 #include <string>
-
-const float AnimatedPlatform::fallingAcceleration = 200.f;
-const float AnimatedPlatform::trampolineImpulse = -150.f;
-const float AnimatedPlatform::defaultAnimDuration = 0.85f;
-const float AnimatedPlatform::selfDestuctAnimDuration = 1.75f;
-const float AnimatedPlatform::invisibleAnimDuration = 2.f;
-const float AnimatedPlatform::selfDestuctTriggerDistMp = 4.f;
-const float AnimatedPlatform::invisibleAnimTriggerDist = 0.2f;
 
 AnimatedPlatform::AnimatedPlatform(DragonJumpFramework& _framework, const Vector2Df& position, PlatformType _type) :
 	Drawable(_framework, position), TickablePlatform(_framework, _type), 
@@ -33,7 +27,7 @@ AnimatedPlatform::AnimatedPlatform(DragonJumpFramework& _framework, const Vector
 		spriteName = SpritePaths::weakPlatform;
 		break;
 	case PlatformType::PT_Trampoline:
-		spriteName = SpritePaths::trampolinePlatform;
+		spriteName = SpritePaths::defaultPlatform;
 		break;
 	default:
 		assert(false && "AnimatedPlatform : wrong platfrom type");
@@ -41,25 +35,28 @@ AnimatedPlatform::AnimatedPlatform(DragonJumpFramework& _framework, const Vector
 		return;
 	}
 	if (framework.GetSpriteInfo(spriteName, defaultSprite)) {
-		collisionInfo.size = defaultSprite.offset;
-		defaultSprite.offset * 0.5f;
+		defaultSprite.offset *= 0.5f;
+		collisionInfo.halfSize = defaultSprite.offset;
+		collisionInfo.halfSize.x *= 0.9f;
 	}
 	else {
 		assert(false && "AnimatedPlatform : defaultSprite init failed");
 		bIsActive = false;
 		return;
 	}
-	if (!framework.GetNumberedSprites(spriteName, animSprites) && 
-		type == PlatformType::PT_Trampoline) {
+	if (type == PlatformType::PT_Trampoline) {
+		spriteName = SpritePaths::trampolinePlatform;
+	}
+	if (!framework.GetNumberedSprites(spriteName, animSprites)) {
 		assert(false && "AnimatedPlatform : Trampoline sprites init failed");
-		collisionInfo.size = 0.f;
+		collisionInfo.halfSize = 0.f;
 		bIsActive = false;
 		return;
 	}
 	for (auto& sprite : animSprites) {
 		sprite.offset *= 0.5f;
 		if (type == PlatformType::PT_Trampoline) {
-			sprite.offset.y -= (defaultSprite.offset.y + sprite.offset.y * 0.9f);
+			sprite.offset.y += (defaultSprite.offset.y + sprite.offset.y * 0.85f);
 		}
 	}
 }
@@ -80,10 +77,10 @@ bool AnimatedPlatform::IsActive()
 	return bIsActive;
 }
 
-bool AnimatedPlatform::Reactivate(const Vector2Df& position)
+bool AnimatedPlatform::Reactivate(const Vector2Df& pos)
 {
-	if (Platform::Reactivate(position)) {
-		currentVelocity = 0.f;
+	if (Platform::Reactivate(pos)) {
+		velocity = 0.f;
 		timeFromAnimStart = -1.f;
 	}
 	assert(bIsActive && "AnimatedPlatform reported faied reactivation");
@@ -92,20 +89,20 @@ bool AnimatedPlatform::Reactivate(const Vector2Df& position)
 
 void AnimatedPlatform::ReceiveTick(float deltaTime)
 {
-	if (timeFromAnimStart >= 0.f && timeFromAnimStart < animationDuration)
+	if (timeFromAnimStart >= 0.f && timeFromAnimStart < animationDuration) {
 		timeFromAnimStart += deltaTime;
-
+	}
 	switch (type) {
 	case PlatformType::PT_Weak:
 		if (timeFromAnimStart > 0.f) {
-			position.y += currentVelocity.y * deltaTime;
-			currentVelocity.y += fallingAcceleration * deltaTime;
+			position.y += velocity.y * deltaTime;
+			velocity.y += fallingAcceleration * deltaTime;
 		}
 		return;
 	case PlatformType::PT_SelfDestuct:
 		if (timeFromAnimStart < 0.f && 
 			(framework.GetPlayerDoodle()->GetPosition() - position).LengthSquared() < 
-			collisionInfo.size.LengthSquared() * selfDestuctTriggerDistMp) {
+			collisionInfo.halfSize.LengthSquared() * selfDestuctTriggerDistMp) {
 			timeFromAnimStart = 0.f;
 		}
 		break;
@@ -125,11 +122,13 @@ bool AnimatedPlatform::CanBeSteppedOn() const
 
 void AnimatedPlatform::ReceiveCollision(CollidableBase& other)
 {
+	if (type != PlatformType::PT_Weak) {
+		return;
+	}
 	if (PlayerDoodle * doodle{ dynamic_cast<PlayerDoodle*>(&other) }) {
-		if (type == PlatformType::PT_Weak && currentVelocity.y == 0.f && 
-			timeFromAnimStart < 0.f && doodle->GetCurrentVelocity().y > 0.f && 
-			doodle->GetPosition().y < position.y - collisionInfo.size.y) {
-			currentVelocity.y = doodle->GetCurrentVelocity().y;
+		if (timeFromAnimStart < 0.f && doodle->GetVelocity().y > 0.f && 
+			doodle->GetPosition().y < position.y + collisionInfo.halfSize.y) {
+			velocity.y = doodle->GetVelocity().y;
 			timeFromAnimStart = 0.f;
 		}
 	}
@@ -138,6 +137,7 @@ void AnimatedPlatform::ReceiveCollision(CollidableBase& other)
 void AnimatedPlatform::OnJumpFrom(PlayerDoodle& other)
 {
 	if (type == PlatformType::PT_Trampoline) {
+		DJLog("Trampoline : added impulse");
 		other.AddImpulse({ 0.f, trampolineImpulse }, 0.f);
 		timeFromAnimStart = 0.f;
 	}	
@@ -148,13 +148,14 @@ bool AnimatedPlatform::DrawIfActive_Internal()
 	if (position.y + defaultSprite.offset.y <= +0.f) {
 		return false;
 	}
-	int spriteToDraw{ timeFromAnimStart >= 0.f ? -1 : static_cast<int>(
-		timeFromAnimStart / static_cast<float>(animationDuration / animSprites.size())) };
+	int spriteToDraw{ timeFromAnimStart >= animationDuration ? static_cast<int>(animSprites.size() - 1 ) :
+		(timeFromAnimStart < 0.f ? -1 : 
+			static_cast<int>( timeFromAnimStart * animSprites.size() / animationDuration ) ) };
 	if (type == PlatformType::PT_Trampoline) {
 		if (framework.IsOutOfSideBorder(position, defaultSprite.sprite, true) == 0) {
 			defaultSprite.Draw(position);
 		}
-		animSprites.at(spriteToDraw + 1).Draw(position);
+		animSprites.at(spriteToDraw < 0 ? 0 : spriteToDraw).Draw(position);
 		return true;
 	}
 	else {

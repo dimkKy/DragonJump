@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Tickable.h"
 #include "Collidable.h"
 

@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "Drawable.h"
 
 //aligniment [.0, .0]

@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #include "Platform.h"
 #include "DragonJumpFramework.h"
 #include "SpriteLoader.h"
@@ -7,8 +9,9 @@ Platform::Platform(DragonJumpFramework& _framework, const Vector2Df& pos) :
 	Drawable(_framework, pos)
 {
 	if (framework.GetSpriteInfo(SpritePaths::defaultPlatform, defaultSprite)) {
-		collisionInfo.size = defaultSprite.offset;
-		defaultSprite.offset * 0.5f;
+		defaultSprite.offset *= 0.5f;
+		collisionInfo.halfSize = defaultSprite.offset;
+		collisionInfo.halfSize.x *= 0.9f;
 	}
 	else {
 		bIsActive = false;
@@ -20,7 +23,9 @@ bool Platform::Reactivate(const Vector2Df& pos)
 {
 	position = pos;
 	bIsActive = true;
-	return IsActive();
+	bool test{ IsActive() };
+	assert(bIsActive && "Platform reported faied reactivation");
+	return bIsActive;
 }
 
 bool Platform::IsActive()
@@ -40,6 +45,3 @@ bool Platform::DrawIfActive_Internal()
 	else
 		return false;
 }
-
-
-

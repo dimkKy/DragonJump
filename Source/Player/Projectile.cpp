@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #include "Projectile.h"
 #include "DragonJumpFramework.h"
 #include "PlayerDoodle.h"
@@ -27,7 +29,7 @@ bool Projectile::Reactivate(const Vector2Df& target)
 {
 	if (collisionInfo) {
 		position = framework.GetPlayerDoodle()->GetMouthGlobalPos();
-		currentVelocity = (target - position).ToUnit() * projectileSpeed;
+		velocity = (target - position).ToUnit() * projectileSpeed;
 		bIsActive = true;
 		return IsActive();
 	}
@@ -67,5 +69,5 @@ bool Projectile::DrawIfActive_Internal()
 void Projectile::ReceiveTick(float deltaTime)
 {
 	assert(IsActive() && "Projectile: tick received while inactive");
-	position += currentVelocity * deltaTime;
+	position += velocity * deltaTime;
 }

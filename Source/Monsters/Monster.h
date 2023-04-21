@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "SteppableOn.h"
 
 enum class MonsterType {
@@ -10,10 +13,12 @@ enum class MonsterType {
 
 class MonsterBase {
 public:
-	virtual MonsterType GetMonsterType() const final { return type; };
+	virtual MonsterType GetMonsterType() const final 
+		{ return type; };
 protected:
 	//MonsterBase() = delete;
-	MonsterBase(MonsterType _type) : type{ _type } {};
+	MonsterBase(MonsterType _type) : 
+		type{ _type } {};
 	MonsterType type;
 };
 
@@ -32,6 +37,5 @@ protected:
 	//Monster() = delete;
 	Monster(MonsterType _type): 
 		MonsterBase(_type) {};
-	MonsterType type;
 };
 

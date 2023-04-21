@@ -14,7 +14,6 @@ enum class AbilityType;
 class PlayerDoodle : public Tickable, public Collidable<RectangleShape>
 {
 public:
-	PlayerDoodle() = delete;
 	PlayerDoodle(DragonJumpFramework& _framework) = delete;
 	PlayerDoodle(DragonJumpFramework& _framework, const Vector2Df& pos);
 
@@ -34,48 +33,52 @@ public:
 	Vector2Df GetMouthGlobalPos() const 
 		{ return position; };
 	bool IsStanding() const 
-		{ return standingTimeLeft >= 0.f && onJumpDelegate; };
+		{ return standingTimeLeft >= 0.f && standingOn; };
 	void SetPosition(const Vector2Df& inPosition) { position = inPosition; };
-	float GetCalculateJumpDistance() const;
-	//float GetJumpingVelocity() const { return jumpingVelocity; };
+	
+	float GetJumpingVelocity() const { return jumpingVelocity; };
+
+	static const float jumpHeight;
 protected:
 	[[nodiscard]] virtual bool DrawIfActive_Internal() override;
 	void ProcessDraw();
 	void DampCurrentVelocity(float deltaTime, float forceLengthSquared);
-	//void TryStartStanding(SteppableOnBase& other);
-	void StopStanding();
 	void StartDying();
-	
-	template<int index = 0, int maxIndex = 5>
+
+	//
+	template<int index = 0, int maxIndex = 4>
 	void SetOffsets();
-
+	constexpr static float CalculateJumpHeight();
+	//
 	std::vector<SpriteInfo> sprites;
-	int mainSpriteToDraw{ 0 };
-	float mass = 75.f;
-	float gravityForce = 300.f;
-	float jumpImpulseMultiplier = -100.f;
-	float jumpingVelocity = -300.f;
-	std::list<std::pair<Vector2Df, float>> additionalForces;
-	float minVelocityAndForce = 0.5f;
-	float maxVelocityLengthSquared = 350000.f;
-	Vector2Df dampingMultiplier = { -0.03f, -0.00001f };
-
-	float standingTime = 0.06f;
+	int mainSpriteToDraw = 0;
 	float standingTimeLeft = -1.f;
-	//pointer to SteppableOnBase?
-	std::function<void(PlayerDoodle&)> onJumpDelegate = nullptr;
+	std::list<std::pair<Vector2Df, float>> activeForces;
 
+	static constexpr float mass = 75.f;
+	static constexpr float gravityForce = 300.f;
+	static constexpr float jumpImpulse = -100.f;
+	static constexpr float jumpImpulseDuration = 0.5f;
+	static constexpr float jumpingVelocity = -300.f;
+	static constexpr float minVelocityAndForce = 0.5f;
+	static constexpr float maxVelocityLengthSquared = 350000.f;
+	static const Vector2Df dampingMultiplier;
+	static constexpr float standingTime = 0.06f;
+	
+	//std::function<void(PlayerDoodle&)> onJumpDelegate = nullptr;
+	SteppableOnBase* standingOn = nullptr;
 	bool bIsAiming = false;
 
-	float fallingAnimationDuration = 3.5f;
+	static constexpr float fallingAnimationDuration = 3.5f;
 	float fallingAnimationTimeLeft = -1.f;
 	const Hole* controllingHole = nullptr;
 
 	float abilityDurationLeft = -1.f;
 
-	float knockoutAnimationDuration = 1.f;
+	static constexpr float knockoutAnimationDuration = 1.f;
 	float knockoutAnimationTimeLeft = -1.f;
 	std::list< std::shared_ptr<Sprite>> knockoutSprites;
+	std::map<AbilityType, float> activeAbilities;
 };
 
 template<int index, int maxIndex>
@@ -84,10 +87,10 @@ inline void PlayerDoodle::SetOffsets()
 	static_assert(index >= 0 && maxIndex >= 0, "indexes must be positive");
 	if constexpr (index < maxIndex) {
 		if constexpr (index % 2) {
-			sprites.at(index).offset.x *= 0.66f;
+			sprites.at(index).offset.x *= 0.33f;
 		}
 		else {
-			sprites.at(index).offset.x *= 0.33f;
+			sprites.at(index).offset.x *= 0.66f;
 		}
 		sprites.at(index).offset.y *= 0.5f;
 		SetOffsets<index + 1, maxIndex>();

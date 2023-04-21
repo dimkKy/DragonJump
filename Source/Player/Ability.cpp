@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #include "Ability.h"
 #include "SpriteLoader.h"
 #include <cassert>

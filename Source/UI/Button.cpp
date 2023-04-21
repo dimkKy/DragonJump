@@ -1,3 +1,5 @@
+// by Dmitry Kolontay
+
 #include "Button.h"
 #include <cassert>
 Button::Button(DragonJumpFramework& _framework, 
@@ -61,7 +63,8 @@ bool Button::OnMouseButtonUp(const Vector2D& clickPos)
         return false;
     if (Vector2Df pos{ clickPos }; pos.IsPointInsideRectangle( 
         position - sprites.at(1).offset, position + sprites.at(1).offset)) {
-        bIsPressed = true;
+        std::invoke(onClicked);
+        bIsPressed = false;
         return true;
     }
     else {

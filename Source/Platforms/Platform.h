@@ -1,4 +1,7 @@
+// by Dmitry Kolontay
+
 #pragma once
+
 #include "SteppableOn.h"
 #include <memory>
 

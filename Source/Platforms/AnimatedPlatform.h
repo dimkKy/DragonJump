@@ -1,6 +1,8 @@
-#pragma once
-#include "TickablePlatform.h"
+// by Dmitry Kolontay
 
+#pragma once
+
+#include "TickablePlatform.h"
 
 class AnimatedPlatform : public TickablePlatform
 {
@@ -8,7 +10,7 @@ public:
 	AnimatedPlatform(DragonJumpFramework& _framework, const Vector2Df& position, PlatformType _type);
 
 	virtual bool IsActive() override;
-	virtual bool Reactivate(const Vector2Df& position) override;
+	virtual bool Reactivate(const Vector2Df& pos) override;
 
 	virtual void ReceiveCollision(CollidableBase& other) override;
 	[[nodiscard]] virtual bool CanBeSteppedOn() const override;
@@ -23,12 +25,12 @@ protected:
 	float animationDuration;
 	float timeFromAnimStart;
 
-	static const float fallingAcceleration;
-	static const float trampolineImpulse;
-	static const float defaultAnimDuration;
-	static const float selfDestuctAnimDuration;
-	static const float invisibleAnimDuration;
-	static const float selfDestuctTriggerDistMp;
-	static const float invisibleAnimTriggerDist;
+	static constexpr float fallingAcceleration = 200.f;
+	static constexpr float trampolineImpulse = -15.f;
+	static constexpr float defaultAnimDuration = 0.85f;
+	static constexpr float selfDestuctAnimDuration = 1.75f;
+	static constexpr float invisibleAnimDuration = 2.f;
+	static constexpr float selfDestuctTriggerDistMp = 4.f;
+	static constexpr float invisibleAnimTriggerDist = 0.2f;
 };
 
