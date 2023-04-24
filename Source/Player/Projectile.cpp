@@ -9,8 +9,6 @@
 
 //https://bugs.llvm.org/show_bug.cgi?id=34516#c1
 
-const float Projectile::projectileSpeed = 500.f;
-
 Projectile::Projectile(DragonJumpFramework& _framework, const Vector2Df& target) :
 	Drawable(_framework, _framework.GetPlayerDoodle()->GetMouthGlobalPos()), 
 	Tickable((target - position).ToUnit() * projectileSpeed)
@@ -36,7 +34,6 @@ bool Projectile::Reactivate(const Vector2Df& target)
 	else {
 		return false;
 	}
-	
 }
 
 bool Projectile::IsActive()
@@ -59,6 +56,14 @@ bool Projectile::DrawIfActive_Internal()
 {
 	if (position.y + sprite.offset.y > +0.f) {
 		sprite.Draw(position);
+#ifndef ORIGINAL_SHOOTING
+		if (int additionalDraw{ framework.DoesSpriteTouchBorder(position, sprite.sprite) }) {
+			float posX{ position.x };
+			position.x -= framework.GetSize().x * additionalDraw;
+			sprite.Draw(position);
+			position.x = posX;
+		}
+#endif // !ORIGINAL_SHOOTING
 		return true;
 	}
 	else {
@@ -70,4 +75,12 @@ void Projectile::ReceiveTick(float deltaTime)
 {
 	assert(IsActive() && "Projectile: tick received while inactive");
 	position += velocity * deltaTime;
+#ifndef ORIGINAL_SHOOTING
+	position.x = std::fmodf(position.x,
+		static_cast<float>(framework.GetSize().x));
+	if (position.x < 0.f) {
+		position.x += framework.GetSize().x;
+	}
+#endif // !ORIGINAL_SHOOTING
+
 }

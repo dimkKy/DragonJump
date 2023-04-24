@@ -109,9 +109,6 @@ void AnimatedPlatform::ReceiveTick(float deltaTime)
 	default:
 		break;
 	}
-	if (timeFromAnimStart > animationDuration) {
-		OnAnimEnded();
-	}
 }
 
 bool AnimatedPlatform::CanBeSteppedOn() const
@@ -136,10 +133,17 @@ void AnimatedPlatform::ReceiveCollision(CollidableBase& other)
 
 void AnimatedPlatform::OnJumpFrom(PlayerDoodle& other)
 {
-	if (type == PlatformType::PT_Trampoline) {
+	switch (type) {
+	case PlatformType::PT_OneOff:
+		bIsActive = false;
+		break;
+	case PlatformType::PT_Trampoline:
 		DJLog("Trampoline : added impulse");
 		other.AddImpulse({ 0.f, trampolineImpulse }, 0.f);
 		timeFromAnimStart = 0.f;
+		break;
+	default:
+		break;
 	}	
 }
 
@@ -148,9 +152,14 @@ bool AnimatedPlatform::DrawIfActive_Internal()
 	if (position.y + defaultSprite.offset.y <= +0.f) {
 		return false;
 	}
-	int spriteToDraw{ timeFromAnimStart >= animationDuration ? static_cast<int>(animSprites.size() - 1 ) :
-		(timeFromAnimStart < 0.f ? -1 : 
-			static_cast<int>( timeFromAnimStart * animSprites.size() / animationDuration ) ) };
+	if (timeFromAnimStart >= animationDuration) {
+		if (OnAnimEnded()) {
+			return false;
+		}
+	}
+	int spriteToDraw{ timeFromAnimStart < 0.f ? -1 :
+			static_cast<int>(timeFromAnimStart * animSprites.size() / animationDuration) };
+
 	if (type == PlatformType::PT_Trampoline) {
 		if (framework.IsOutOfSideBorder(position, defaultSprite.sprite, true) == 0) {
 			defaultSprite.Draw(position);
@@ -173,13 +182,17 @@ bool AnimatedPlatform::DrawIfActive_Internal()
 	return true;
 }
 
-void AnimatedPlatform::OnAnimEnded()
+bool AnimatedPlatform::OnAnimEnded()
 {
 	if (type == PlatformType::PT_Trampoline) {
 		timeFromAnimStart = -1.f;
+		return false;
 	}
 	else {
-		bIsActive = false;
+		if (type != PlatformType::PT_Invisible) {
+			bIsActive = false;
+		}
+		return true;
 	}
 }
 

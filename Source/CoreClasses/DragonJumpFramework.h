@@ -9,7 +9,6 @@
 #include <random>
 
 class Drawable;
-//class Collidable;
 class Platform;
 class TickablePlatform;
 class PlayerDoodle;
@@ -37,15 +36,22 @@ void DebugMsg(Args&&... args)
 #endif
 
 struct Vector2D {
-	Vector2D() : x{ 0 }, y{ 0 } {};
-	Vector2D(const int& _x, const int& _y) : x{ _x }, y{ _y } {};
+	constexpr Vector2D() : x{ 0 }, y{ 0 } {};
+	constexpr Vector2D(const int& _x, const int& _y) : 
+		x{ _x }, y{ _y } {};
 	int x;
 	int y;
-	int LengthSquared() const { return x * x + y * y; };
+	constexpr int LengthSquared() const
+		{ return x * x + y * y; };
+
 	bool IsPointInsideRectangle(const Vector2D& leftUpper, const Vector2D& rightLower) const
-		{ return x >= leftUpper.x && x <= leftUpper.x && y >= leftUpper.y && y <= rightLower.y; }
+
+		{ return x >= leftUpper.x && x <= leftUpper.x && 
+			y >= leftUpper.y && y <= rightLower.y; }
+
 	explicit operator bool() const
 		{ return x != 0 && y != 0; }
+
 	Vector2D& operator=(const Vector2D& other) {
 		if (this == &other)
 			return *this;
@@ -97,16 +103,31 @@ struct Vector2D {
 };
 
 struct Vector2Df {
-	Vector2Df() : x{ 0.f }, y{ 0.f } {};
-	Vector2Df(const float& _x) : x{ _x }, y{ _x } {};
-	Vector2Df(const int& _x) : x{ static_cast<float>(_x) }, y{ static_cast<float>(_x) } {};
-	Vector2Df(const float& _x, const float& _y) : x{ _x }, y{ _y } {};
-	Vector2Df(const int& _x, const int& _y) : x{ static_cast<float>(_x) }, y{ static_cast<float>(_y) } {};
-	Vector2Df(const Vector2Df& other) : x{ other.x }, y{ other.y } {};
-	Vector2Df(const Vector2D& other) : x{ static_cast<float>(other.x) }, y{ static_cast<float>(other.y) } {};
+	constexpr Vector2Df() :
+		x{ 0.f }, y{ 0.f } {};
+
+	Vector2Df(const float& _x) : 
+		x{ _x }, y{ _x } {};
+
+	Vector2Df(const int& _x) : 
+		x{ static_cast<float>(_x) }, y{ static_cast<float>(_x) } {};
+
+	constexpr Vector2Df(const float& _x, const float& _y) :
+		x{ _x }, y{ _y } {};
+
+	Vector2Df(const int& _x, const int& _y) : 
+		x{ static_cast<float>(_x) }, y{ static_cast<float>(_y) } {};
+
+	Vector2Df(const Vector2Df& other) : 
+		x{ other.x }, y{ other.y } {};
+
+	Vector2Df(const Vector2D& other) : 
+		x{ static_cast<float>(other.x) }, y{ static_cast<float>(other.y) } {};
+
 	float x;
 	float y;
-	float LengthSquared() const { return x * x + y * y; };
+
+	constexpr float LengthSquared() const { return x * x + y * y; };
 
 	explicit operator bool() const
 		{ return x != 0.f && y != 0.f; }
@@ -201,37 +222,72 @@ struct Vector2Df {
 };
 
 struct SpriteInfo {
-	SpriteInfo() : sprite{ nullptr }, offset{ 0.f, 0.f } {};
+	SpriteInfo() : 
+		sprite{ nullptr }, offset{ 0.f, 0.f } {};
+
 	SpriteInfo(const std::shared_ptr<Sprite>& _sprite) : 
 		sprite{ _sprite }, offset{ 0, 0 } {};
+
 	SpriteInfo(const std::shared_ptr<Sprite>& _sprite, const float& x, const float& y) : 
 		sprite{ _sprite }, offset{ x, y } {};
+
 	SpriteInfo(const std::shared_ptr<Sprite>& _sprite, const int& x, const int& y) : 
 		sprite{ _sprite }, offset{ x, y } {};
+
 	SpriteInfo(const std::shared_ptr<Sprite>& _sprite, const Vector2Df& vector) : 
 		sprite{ _sprite }, offset{ vector } {};
+
 	SpriteInfo(const std::shared_ptr<Sprite>& _sprite, const Vector2D& vector) : 
 		sprite{ _sprite }, offset{ static_cast<float>(vector.x), static_cast<float>(vector.y) } {};
+
 	std::shared_ptr<Sprite> sprite;
+
 	Vector2Df offset;
+
 	void Draw(const Vector2Df& vector) const {
 		drawSprite(sprite.get(), static_cast<int>(vector.x - offset.x + 0.5f), static_cast<int>(vector.y - offset.y + 0.5f));
 	};
+
 	void Draw(const float& posX, const float& posY) const {
 		drawSprite(sprite.get(), static_cast<int>(posX - offset.x + 0.5f), static_cast<int>(posY - offset.y + 0.5f));
 	};
+
 	void Draw(const Vector2D& vector) const {
 		drawSprite(sprite.get(), vector.x - static_cast<int>(offset.x + 0.5f), vector.y - static_cast<int>(offset.y + 0.5f));
 	};
+
 	void Draw(const int& posX, const int& posY) const {
 		drawSprite(sprite.get(), posX - static_cast<int>(offset.x + 0.5f), posY - static_cast<int>(offset.y + 0.5f));
 	};
+
 	void Reset() {
 		sprite.reset();
 		offset = 0.f;
 	}
+
 	explicit operator bool() const
 		{ return sprite.get() && offset; }
+};
+
+struct PlayerState {
+	PlayerState() :
+		lifesLeft{ lifes }, distancePassed{ 0.f }, 
+		jumps{ 0 } {};
+	int lifesLeft;
+	float distancePassed;
+	int jumps;
+
+	void Reset() {
+		lifesLeft = lifes;
+		distancePassed = 0.f;
+		jumps = 0;
+	}
+protected:
+#ifdef NDEBUG
+	static constexpr int lifes = 5;
+#else
+	static constexpr int lifes = 2;
+#endif
 };
 
 template<class TDrawable>
@@ -243,6 +299,7 @@ class DragonJumpFramework : public Framework
 public:
 	DragonJumpFramework(bool bStartWithMenu = true, int sizeX = 450, int sizeY = 600, bool bFullscreen = false);
 	[[nodiscard]] Vector2D GetSize() const { return screenSize; };
+	[[nodiscard]] int GetDoodleInputDirection() const { return doodleInputDirection; };
 	//
 	[[nodiscard]] bool GetSprite(const std::string& path, std::shared_ptr<Sprite>& outSprite);
 	[[nodiscard]] bool GetSprite(const char* path, std::shared_ptr<Sprite>& outSprite)
@@ -260,20 +317,25 @@ public:
 	[[nodiscard]] bool GetSpriteInfo(const char* path, SpriteInfo& spriteInfo)
 		{ return GetSpriteInfo(std::string{ path }, spriteInfo); };
 
-	[[nodiscard]] std::vector<SpriteInfo> GetNumberedSprites(const std::string& pathBase);
-	[[nodiscard]] std::vector<SpriteInfo> GetNumberedSprites(const char* pathBase)
-		{ return GetNumberedSprites(std::string{ pathBase }); };
+	[[nodiscard]] std::vector<SpriteInfo> GetNumberedSprites(const std::string& pathBase, int startI = 0);
+	[[nodiscard]] std::vector<SpriteInfo> GetNumberedSprites(const char* pathBase, int startI = 0)
+		{ return GetNumberedSprites(std::string{ pathBase }, startI); };
 
-	[[maybe_unused]] bool GetNumberedSprites(const std::string& pathBase, std::vector<SpriteInfo>& vec, int index = 0);
-	[[maybe_unused]] bool GetNumberedSprites(const char* pathBase, std::vector<SpriteInfo>& vec, int index = 0)
-		{ return GetNumberedSprites(std::string{ pathBase }, vec, index); };
+	[[maybe_unused]] bool GetNumberedSprites(const std::string& pathBase, std::vector<SpriteInfo>& vec, int startI = 0);
+	[[maybe_unused]] bool GetNumberedSprites(const char* pathBase, std::vector<SpriteInfo>& vec, int startI = 0)
+		{ return GetNumberedSprites(std::string{ pathBase }, vec, startI); };
 	//
 	[[nodiscard]] PlayerDoodle* GetPlayerDoodle() { return playerDoodle.get(); };
 	[[nodiscard]] Vector2D GetMousePosition() const { return mousePosition; }
-	//theese values should be passed directlly but well
-	[[nodiscard]] int GetLifesLeft() const { return lifesLeft; };
-	[[nodiscard]] float GetScore() const { return distancePassed; };
+	//
+	[[nodiscard]] int GetLifesLeft() const 
+		{ return playerState.lifesLeft; };
+	[[nodiscard]] int GetDistance() const 
+		{ return static_cast<int>(playerState.distancePassed); };
+	[[nodiscard]] int GetJumps();
+
 	void IncreaseMonstersKilledCounter() { ++monstersKilledSinceAbilitySpawn; };
+	void IncreaseJumpsCounter() { ++playerState.jumps; };
 	//
 	[[nodiscard]] bool IsInScreenArea(const Vector2Df& pos, const Vector2Df& size,
 		bool checkSides = true, bool checkUpper = false) const;
@@ -286,6 +348,12 @@ public:
 		{ return IsOutOfSideBorder(pos, Vector2Df{ GetSpriteSize(sprite) }, yAxis); }
 
 	[[nodiscard]] int DoesSpriteTouchBorder(const Vector2Df& pos, const Vector2Df& size, bool yAxis = false) const;
+	[[nodiscard]] int DoesSpriteTouchBorder(const Vector2Df& pos, const std::shared_ptr<Sprite>& sprite, bool yAxis = false) const
+		{ return DoesSpriteTouchBorder(pos, Vector2Df{ GetSpriteSize(sprite) }, yAxis); }
+	
+	static constexpr float inputImpulseAbs = 25.f;
+	static constexpr float platformsInScreenWidth = 5.5f;
+	static constexpr Vector2D minimalScreenSize = { 300, 400 };
 protected:
 	virtual void PreInit(int& width, int& height, bool& fullscreen) override;
 	[[nodiscard]] virtual bool Init() override;
@@ -311,18 +379,13 @@ protected:
 	void OnStartButtonClicked();
 	[[nodiscard]] PlatformType GetPlatformType(int seed);
 	[[nodiscard]] MonsterType GetMonsterType(int seed);
-	//templated monster / platform ?
+	//
 	[[maybe_unused]] Platform* SpawnPlatform(Vector2Df pos, PlatformType type);
-	[[maybe_unused]] Ability* SpawnAbility(const Platform& target, AbilityType type);
+	[[maybe_unused]] Ability* SpawnAbility(const Platform& target, AbilityType type, int cost = abilityCost);
 	//
 	[[maybe_unused]] MonsterBase* SpawnMonster(const Platform& target, MonsterType type);
 	[[maybe_unused]] Projectile* SpawnProjectile(const Vector2Df& target);
 
-	/*template<class TCollidable>
-		requires
-	void CorrectSpawnPosition(TCollidable& target, const Vector2Df& offset);*/
-		
-	//void DispatchPlayerTickAndCollision_Menu(float deltaTime);
 	
 	void SubstepWorldTicks(float deltaTime);
 	void DispatchWorldTicks(float deltaTime);
@@ -340,14 +403,28 @@ protected:
 	bool (DragonJumpFramework::* tickFunction)(void);
 	float spriteScale;
 
+	PlayerState playerState;
 	int doodleInputDirection;
-	float inputImpulseAbs;
-	float platformsInScreenWidth;
-	
-	int lifesLeft;
-	float distancePassed;
 	int monstersKilledSinceAbilitySpawn;
+	int lastDisplayedJumps;
+
+	static constexpr int abilityCost = 5;
+
+	template<class TDrawable>
+		requires std::is_base_of<Drawable, TDrawable>::value
+	static void ClearAll(std::vector<std::shared_ptr<TDrawable>>& vec) {
+		vec.clear();
+	}
+	template<typename FDrawable, typename...SDrawable>
+		requires std::is_base_of<Drawable, FDrawable>::value &&
+	((std::is_base_of<Drawable, SDrawable>::value) &&...)
+		static void ClearAll(std::vector<std::shared_ptr<FDrawable>>& vec,
+			std::vector<std::shared_ptr<SDrawable>>&...vecs) {
+		vec.clear();
+		ClearAll(vecs...);
+	}
 	
+	//---------
 	std::map<std::string, std::shared_ptr<Sprite>> loadedSprites;
 	std::shared_ptr<PlayerDoodle> playerDoodle;
 	Vector2Df lastPlatformPos;

@@ -28,7 +28,6 @@ public:
 protected:
 	virtual bool DrawIfActive_Internal() override;
 	SpriteInfo sprite;
-	Vector2Df collisionSize;
 
-	static const float projectileSpeed;
+	static constexpr float projectileSpeed = 500.f;
 };

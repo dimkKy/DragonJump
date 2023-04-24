@@ -11,7 +11,6 @@
 #include <cassert>
 
 const float PlayerDoodle::jumpHeight = PlayerDoodle::CalculateJumpHeight();
-const Vector2Df PlayerDoodle::dampingMultiplier = { -0.03f, -0.00001f };
 
 PlayerDoodle::PlayerDoodle(DragonJumpFramework& _framework, const Vector2Df& pos) :
 	Drawable(_framework, pos), Tickable(0.f, jumpingVelocity * 2.f), 
@@ -61,11 +60,12 @@ bool PlayerDoodle::Reactivate(const Vector2Df& positionX_velocityY)
 		velocity.x = 0.f;
 		knockoutAnimationTimeLeft = -1.f;
 		fallingAnimationTimeLeft = -1.f;
-		mainSpriteToDraw = 0;
+		lastFaceDirection = false;
 		standingTimeLeft = -1.f;
 		standingOn = nullptr;
 		controllingHole = nullptr;
 		activeForces.clear();
+		activeAbilities.clear();
 	}
 	return bIsActive;
 }
@@ -73,15 +73,13 @@ bool PlayerDoodle::Reactivate(const Vector2Df& positionX_velocityY)
 bool PlayerDoodle::DrawIfActive_Internal()
 {
 	if (framework.IsOutOfSideBorder(position,
-		sprites.at(mainSpriteToDraw).sprite, true) > 0 && velocity.y >= -0.f) {
+		sprites.at(lastFaceDirection).sprite, true) > 0 && velocity.y >= -0.f) {
 		//going to fail
 		return false;
 	}
-	//calculate spries
-
-	ProcessDraw();
-	if (int additionalDraw{ framework.DoesSpriteTouchBorder(position,
-		framework.GetSpriteSize(sprites.at(mainSpriteToDraw).sprite))}) {
+	int spriteDrawn{ ProcessDraw() };
+	if (int additionalDraw{ 
+		framework.DoesSpriteTouchBorder(position,sprites.at(spriteDrawn).sprite) }) {
 		float posX{ position.x };
 		position.x -= framework.GetSize().x * additionalDraw;
 		ProcessDraw();
@@ -90,48 +88,45 @@ bool PlayerDoodle::DrawIfActive_Internal()
 	return true;
 }
 
-void PlayerDoodle::ProcessDraw()
+int PlayerDoodle::ProcessDraw()
 {
 	if (controllingHole) {
 		float scale{ fallingAnimationTimeLeft / fallingAnimationDuration };
-		
+		int spriteToDraw{ 0 };
 		if (controllingHole->GetPosition().x > position.x) {
-			mainSpriteToDraw = 1;
+			spriteToDraw = 1;
 		}
-		else {
-			mainSpriteToDraw = 0;
-		}
-		SpriteInfo& spriteInfo{ sprites.at(mainSpriteToDraw) };
+		SpriteInfo& spriteInfo{ sprites.at(spriteToDraw) };
 		Vector2D size{ framework.GetSpriteSize(spriteInfo.sprite) };
 		setSpriteSize(spriteInfo.sprite.get(), static_cast<int>(size.x * scale + 0.5f), static_cast<int>(size.y * scale + 0.5f));
 		spriteInfo.Draw(position + spriteInfo.offset * (1.f - scale));
 		setSpriteSize(spriteInfo.sprite.get(), size.x, size.y);
-		return;
+		return spriteToDraw;
 	}
-	//ugly
-	if (bIsAiming) {
-		mainSpriteToDraw = 4 + static_cast<bool>(standingOn);
-	}
-	else {
-		if (std::abs(velocity.x) > 0.2) {
-			mainSpriteToDraw = 2 * static_cast<bool>(standingOn) + 
-				static_cast<int>(velocity.x > 0.f);
-		}
-		else {
-			mainSpriteToDraw = 2 * static_cast<bool>(standingOn) +
-				(mainSpriteToDraw % 2);
-		}
-	}
+
 	if (!bIsActive) {
-		
+
 		//knockout
 	}
-	
-	sprites.at(mainSpriteToDraw).Draw(position);
+	//ugly
+	int spriteToDraw{ static_cast<int>(lastFaceDirection) };
+	if (bIsAiming) {
+		spriteToDraw = 4 + static_cast<bool>(standingOn);
+		//?
+	}
+	else {
+		if (std::abs(velocity.x) > framework.inputImpulseAbs) {
+			lastFaceDirection = (velocity.x > 0.f);
+		}
+		spriteToDraw = 2 * static_cast<bool>(standingOn) +
+			lastFaceDirection;
+	}
+	sprites.at(spriteToDraw).Draw(position);
 	if (bIsAiming) {
 		//draw mouth
 		//sprites.at(6).Draw({ position.x, position.y });
 	}
+	return spriteToDraw;
 }
 
 void PlayerDoodle::ReceiveTick(float deltaTime)
@@ -174,21 +169,34 @@ void PlayerDoodle::ReceiveTick(float deltaTime)
 		standingTimeLeft = -1.f;
 		//std::invoke(onJumpDelegate, *this);
 		standingOn->OnJumpFrom(*this);
+		if (Platform * platform{ dynamic_cast<Platform*>(standingOn) }) {
+			framework.IncreaseJumpsCounter();
+		}
 		standingOn = nullptr;
 	}
-	if (abilityDurationLeft >= 0.f)
-		abilityDurationLeft -= deltaTime;
-	//
-	Vector2Df resultingForce{ 0.f, gravityForce * deltaTime * mass };	
-	for (auto iterator{ activeForces.begin() }; iterator != activeForces.end(); ) {
-		if ((*iterator).second <= deltaTime) {
-			resultingForce += (*iterator).first * (*iterator).second;
-			activeForces.erase(iterator++);
+
+	for (auto it{ activeAbilities.begin() }; it != activeAbilities.end(); ) {
+		if ((*it).second <= deltaTime) {
+			Ability::OnAbilityTick(*this, (*it).first, (*it).second);
+			activeAbilities.erase(it++);
 		}
 		else {
-			resultingForce += (*iterator).first * deltaTime;
-			(*iterator).second -= deltaTime;
-			++iterator;
+			Ability::OnAbilityTick(*this, (*it).first, deltaTime);
+			(*it).second -= deltaTime;
+			++it;
+		}
+	}
+	//
+	Vector2Df resultingForce{ 0.f, gravityForce * deltaTime * mass };	
+	for (auto it{ activeForces.begin() }; it != activeForces.end(); ) {
+		if ((*it).second <= deltaTime) {
+			resultingForce += (*it).first * (*it).second;
+			activeForces.erase(it++);
+		}
+		else {
+			resultingForce += (*it).first * deltaTime;
+			(*it).second -= deltaTime;
+			++it;
 		}
 	}
 	velocity += resultingForce / mass;
@@ -213,16 +221,20 @@ void PlayerDoodle::ReceiveCollision(CollidableBase& other)
 		if (auto result{ activeAbilities.find(ability->GetAbilityType()) };
 			result != activeAbilities.end()) {
 			if (result->second < 0.f) {
-				result->second = ability->GetAbilityDuration(result->first);
-				ability->Deactivate();
+				result->second = ability->GetAbilityDuration(result->first);	
 			}
 			else {
 				result->second += ability->GetAbilityDuration(result->first) * 0.5f;
 			}
 		}
+		else {
+			activeAbilities.emplace(ability->GetAbilityType(), ability->GetAbilityDuration());
+		}
+		ability->Deactivate();
 		return;
 	}
-	if (!controllingHole) {
+	//can be improved
+	if (!controllingHole && activeAbilities.size() < 1) {
 		if (Hole* hole{ dynamic_cast<Hole*>(&other) }) {
 			controllingHole = hole;
 			fallingAnimationTimeLeft = fallingAnimationDuration;
@@ -247,18 +259,15 @@ void PlayerDoodle::ReceiveCollision(CollidableBase& other)
 			return;
 		}
 	}
-	/*if (abilityDurationLeft <= 0.f) {
-		if (Monster<SShape>*steppable{ dynamic_cast<Monster<SShape>*>(&other) }) {
-
+	if (activeAbilities.size() < 1) {
+		if (MonsterBase* mosnter{ dynamic_cast<MonsterBase*>(&other) }) {
+			//knockout
+			velocity.y = jumpingVelocity * -0.75f;
+			activeForces.clear();
+			knockoutAnimationTimeLeft = knockoutAnimationDuration;
+			StartDying();
 		}
 	}
-		Monster<SShape>*steppable{ dynamic_cast<Monster<SShape>*>(&other) }) {
-		//knockout
-		velocity.y = jumpingVelocity * -0.75f;
-		activeForces.clear();
-		knockoutAnimationTimeLeft = knockoutAnimationDuration;
-		StartDying();
-	}*/
 }
 
 void PlayerDoodle::AddImpulse(const Vector2Df& force, float duration)
@@ -304,29 +313,47 @@ bool PlayerDoodle::StartShooting()
 
 bool PlayerDoodle::StopShooting(Vector2D& outTargetPosition)
 {
-	if (!bIsAiming || (Vector2Df{ outTargetPosition } - GetMouthGlobalPos()).
-		LengthSquared() < collisionInfo.halfSize.LengthSquared())
+	if (!bIsAiming)
 		return false;
+	bIsAiming = false;
+	if ((Vector2Df{ outTargetPosition } - GetMouthGlobalPos()).
+		LengthSquared() < collisionInfo.halfSize.LengthSquared()){
+		return false;
+	}
+#ifdef ORIGINAL_SHOOTING
 	if (outTargetPosition.y >= position.y) {
 		//if target below
 		outTargetPosition.y = rand() % static_cast<int>(position.y * 0.75f + 0.5f);
 	}
-	bIsAiming = false;
+#endif
 	return true;
 }
 
+//bug?: should be above
+constexpr float PlayerDoodle::DampInstSpeed(float speed, float dampingMp)
+{
+	return speed * dampingMp * speed * speed / mass;
+}
 
 constexpr float PlayerDoodle::CalculateJumpHeight()
 {
-	constexpr float distanceFirst{ (jumpingVelocity + (jumpImpulse + gravityForce) * jumpImpulseDuration * 0.5f) * jumpImpulseDuration };
-	constexpr float speedAfterJumpImpulse{ jumpingVelocity + (jumpImpulse + gravityForce) * jumpImpulseDuration };
-	//TODO : DAMPING
+	constexpr float dampedVelocity{ jumpingVelocity + 
+		DampInstSpeed(jumpingVelocity, dampingMultiplier.y) };
+	constexpr float distanceFirst{ 
+		(dampedVelocity + (jumpImpulse + gravityForce) * jumpImpulseDuration * 0.5f) 
+		* jumpImpulseDuration };
+
+	constexpr float speedAfterJumpImpulse{ jumpingVelocity + 
+		(jumpImpulse + gravityForce) * jumpImpulseDuration };
+	constexpr float dampedSecondVelocity{ speedAfterJumpImpulse + 
+		DampInstSpeed(speedAfterJumpImpulse, dampingMultiplier.y) };
+
 	if (speedAfterJumpImpulse < 0.f) {
-		constexpr float distanceSecond{ speedAfterJumpImpulse * speedAfterJumpImpulse / (2.f * gravityForce) };
-		return -0.8f * (distanceFirst - distanceSecond);
+		constexpr float distanceSecond{ 
+			dampedSecondVelocity * dampedSecondVelocity / (2.f * gravityForce) };
+		return -1.f * (distanceFirst - distanceSecond);
 	}
 	else {
 		throw std::logic_error("speedAfterJumpImpulse must be negative");
 	}
 }
-

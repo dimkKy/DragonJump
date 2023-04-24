@@ -50,7 +50,5 @@ protected:
 	DragonJumpFramework& framework;
 	bool bIsActive;
 	Vector2Df position;
-
-	
 };
 

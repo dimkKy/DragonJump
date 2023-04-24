@@ -4,6 +4,8 @@
 
 #include "Collidable.h"
 
+class PlayerDoodle;
+
 enum class AbilityType {
 	AT_Jet,
 	AT_Shield,
@@ -13,13 +15,18 @@ enum class AbilityType {
 class Ability : public Collidable<CircleShape>
 {
 public:
-	Ability(DragonJumpFramework& _framework, AbilityType _type, const Vector2Df& position);
+	Ability(DragonJumpFramework& _framework, const Vector2Df& pos, AbilityType _type);
 	AbilityType GetAbilityType() const 
 		{ return type; };
-	static float GetAbilityDuration(AbilityType _type);
 
+	static void OnAbilityTick(PlayerDoodle& doodle, AbilityType _type, float deltaTime);
+	//static void OnAbilityDraw(PlayerDoodle& doodle, AbilityType _type);
+
+	static float GetAbilityDuration(AbilityType _type);
+	float GetAbilityDuration() const
+		{ return GetAbilityDuration(type);};
 	virtual bool IsActive() override;
-	virtual bool Reactivate(const Vector2Df& position) override;
+	virtual bool Reactivate(const Vector2Df& pos) override;
 	
 	virtual CollisionChannel GetCollisionChannel() const override 
 		{ return CollisionChannel::CC_Pikup; };
@@ -30,5 +37,7 @@ protected:
 	virtual bool DrawIfActive_Internal() override;
 	SpriteInfo sprite;
 	AbilityType type;
+
+	static constexpr float jetForce = -55000.f;
 };
 

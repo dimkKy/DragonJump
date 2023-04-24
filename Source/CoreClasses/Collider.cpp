@@ -5,28 +5,32 @@
 
 template<>
 bool Collider::DetectCollision(const Collidable<CircleShape>& first, const Collidable<CircleShape>& second) {
-	return (first.position - second.position).LengthSquared() <=
+	return (first.GetPosition() - second.GetPosition()).LengthSquared() <=
 		first.collisionInfo.radiusSquared + second.collisionInfo.radiusSquared +
 		2 * sqrtf(first.collisionInfo.radiusSquared * second.collisionInfo.radiusSquared);
 }
 
 template<>
 bool Collider::DetectCollision(const Collidable<RectangleShape>& first, const Collidable<RectangleShape>& second) {
-	return (std::abs(first.position.x - second.position.x) <= first.collisionInfo.halfSize.x + second.collisionInfo.halfSize.x &&
-		std::abs(first.position.y - second.position.y) <= first.collisionInfo.halfSize.y + second.collisionInfo.halfSize.y);
+	Vector2Df fPos{ first.GetPosition() };
+	Vector2Df sPos{ second.GetPosition() };
+	return (std::abs(fPos.x - sPos.x) <= first.collisionInfo.halfSize.x + second.collisionInfo.halfSize.x &&
+		std::abs(fPos.y - sPos.y) <= first.collisionInfo.halfSize.y + second.collisionInfo.halfSize.y);
 }
 
 template<>
 bool Collider::DetectCollision(const Collidable<CircleShape>& first, const Collidable<RectangleShape>& second) {
-	Vector2Df rectHalfSize{ second.collisionInfo.halfSize * 0.5f };
+	Vector2Df fPos{ first.GetPosition() };
+	Vector2Df sPos{ second.GetPosition() };
 	Vector2Df closestToSpherePoint{
-		std::clamp(first.position.x, second.position.x - rectHalfSize.x, second.position.x + rectHalfSize.x),
-		std::clamp(first.position.y, second.position.y - rectHalfSize.y, second.position.y + rectHalfSize.y) };
-	return ((closestToSpherePoint - first.position).LengthSquared() <= first.collisionInfo.radiusSquared) ||
-		first.position.IsPointInsideRectangle(second.position - rectHalfSize, second.position + rectHalfSize);
+		std::clamp(fPos.x, sPos.x - second.collisionInfo.halfSize.x, sPos.x + second.collisionInfo.halfSize.x),
+		std::clamp(fPos.y, sPos.y - second.collisionInfo.halfSize.y, sPos.y + second.collisionInfo.halfSize.y) };
+	return ((closestToSpherePoint - fPos).LengthSquared() <= first.collisionInfo.radiusSquared) ||
+		fPos.IsPointInsideRectangle(sPos - second.collisionInfo.halfSize, sPos + second.collisionInfo.halfSize);
 }
 
-template<> bool Collider::DetectCollision(const Collidable<RectangleShape>& first, const Collidable<CircleShape>& second) {
+template<> 
+bool Collider::DetectCollision(const Collidable<RectangleShape>& first, const Collidable<CircleShape>& second) {
 	{ return DetectCollision(second, first); };
 }
 

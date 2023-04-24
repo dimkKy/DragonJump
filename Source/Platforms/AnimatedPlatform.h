@@ -20,14 +20,14 @@ public:
 protected:
 	//throws out of bounds
 	virtual bool DrawIfActive_Internal() override;
-	void OnAnimEnded();
+	bool OnAnimEnded();
 	std::vector<SpriteInfo> animSprites;
 	float animationDuration;
 	float timeFromAnimStart;
 
 	static constexpr float fallingAcceleration = 200.f;
-	static constexpr float trampolineImpulse = -15.f;
-	static constexpr float defaultAnimDuration = 0.85f;
+	static constexpr float trampolineImpulse = -125.f;
+	static constexpr float defaultAnimDuration = 0.75f;
 	static constexpr float selfDestuctAnimDuration = 1.75f;
 	static constexpr float invisibleAnimDuration = 2.f;
 	static constexpr float selfDestuctTriggerDistMp = 4.f;

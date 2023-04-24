@@ -2,10 +2,11 @@
 
 #include "Ability.h"
 #include "SpriteLoader.h"
+#include "PlayerDoodle.h"
 #include <cassert>
 
-Ability::Ability(DragonJumpFramework& _framework, AbilityType _type, const Vector2Df& position) :
-	Drawable(_framework, position), type{_type}
+Ability::Ability(DragonJumpFramework& _framework, const Vector2Df& _position, AbilityType _type) :
+	Drawable(_framework, _position), type{_type}
 {
 	std::string path;
 	switch (type) {
@@ -23,6 +24,7 @@ Ability::Ability(DragonJumpFramework& _framework, AbilityType _type, const Vecto
 	if (framework.GetSpriteInfo(path, sprite)) {
 		collisionInfo.radiusSquared = sprite.offset.LengthSquared();
 		sprite.offset *= 0.5f;
+		position.y -= sprite.offset.y * 1.1f;
 	}
 	else {
 		bIsActive = false;
@@ -33,7 +35,9 @@ Ability::Ability(DragonJumpFramework& _framework, AbilityType _type, const Vecto
 
 bool Ability::Reactivate(const Vector2Df& pos)
 {
-	position = pos;
+	position.x = pos.x;
+	//?!
+	position.y = pos.y - sprite.offset.y * 1.1f;
 	bIsActive = true;
 	return IsActive();
 }
@@ -56,6 +60,13 @@ bool Ability::IsActive()
 			framework.GetSpriteSize(sprite.sprite));
 	}
 	return bIsActive;
+}
+
+void Ability::OnAbilityTick(PlayerDoodle& doodle, AbilityType _type, float deltaTime)
+{
+	if (_type == AbilityType::AT_Jet) {
+		doodle.AddImpulse({0.f, jetForce }, deltaTime);
+	}
 }
 
 float Ability::GetAbilityDuration(AbilityType _type)

@@ -6,11 +6,9 @@
 #include <cassert>
 #include <numbers>
 
-const float TickableMonster::movableMonsterXSpeed = 125.f;
-
-TickableMonster::TickableMonster(DragonJumpFramework& _framework, const Vector2Df& position, MonsterType _type) :
-	Drawable(_framework, position), Monster(_type), spriteToDraw{ 0 }, knockoutAnimationDuration { 3.f },
-	dyingAnimationDuration{ 0.25f }, dyingAnimationTime{ -1.f }, idleAnimationTime{ 0.f }, idleAnimationPeriod{ 2.f }
+TickableMonster::TickableMonster(DragonJumpFramework& _framework, const Vector2Df& _position, MonsterType _type) :
+	Drawable(_framework, _position), Monster(_type), 
+	spriteToDraw{ 0 }, dyingAnimationTime{ -1.f }, idleAnimationTime{ 0.f }
 {
 	std::string path;
 	int desiredSpriteNumber{ 2 };
@@ -20,6 +18,7 @@ TickableMonster::TickableMonster(DragonJumpFramework& _framework, const Vector2D
 		break;
 	case MonsterType::MT_Movable:
 		path = SpritePaths::movableMonster;
+		velocity.x = movableMonsterXSpeed;
 		break;
 	default:
 		break;
@@ -30,6 +29,8 @@ TickableMonster::TickableMonster(DragonJumpFramework& _framework, const Vector2D
 			info.offset *= 0.5f;
 		}
 		collisionInfo.halfSize = spriteInfos.at(0).offset;
+		//?!
+		position.y -= collisionInfo.halfSize.y * 1.1f;
 	}
 	else {
 		bIsActive = false;
@@ -46,22 +47,18 @@ Vector2Df TickableMonster::GetPosition() const
 bool TickableMonster::DrawIfActive_Internal()
 {	
 	if (position.y + spriteInfos.at(0).offset.y > +0.f) {
-		//can be done better
-		/*if (dyingAnimationTime > dyingAnimationDuration && velocity.y == 0.f) {
-			return false;
-		}*/
-		spriteInfos.at(spriteToDraw).Draw(position.x, position.y + GetAnimOffsetY());
+		spriteInfos.at(spriteToDraw).Draw(
+			position.x, position.y + GetAnimOffsetY());
 		return true;
 	}
 	else
 		return false;
-	
 }
 
 float TickableMonster::GetAnimOffsetY() const
 {
 	if (dyingAnimationTime < 0.f) {
-		return spriteInfos.at(0).offset.y * 0.4f *
+		return spriteInfos.at(0).offset.y * idleAnimAmplitudeMp *
 			sinf(idleAnimationTime / idleAnimationPeriod * std::numbers::pi_v<float>);
 	}
 	else {
@@ -72,14 +69,16 @@ float TickableMonster::GetAnimOffsetY() const
 void TickableMonster::ReceiveCollision(CollidableBase& other)
 {
 	if (Projectile * projectile{ dynamic_cast<Projectile*>(&other) }) {
-		if (dyingAnimationTime < 0.f) {
-			dyingAnimationTime = 0.f;
-			velocity = 0.f;
-			if (type == MonsterType::MT_Static) {
-				spriteToDraw = spriteInfos.size() - 1;
-			}
-			framework.IncreaseMonstersKilledCounter();
-		}	
+		if (dyingAnimationTime >= 0.f) {
+			return;
+		}
+		dyingAnimationTime = 0.f;
+		velocity = 0.f;
+		if (type == MonsterType::MT_Static) {
+			spriteToDraw = static_cast<int>(spriteInfos.size()) - 1;
+		}
+		framework.IncreaseMonstersKilledCounter();
+		position = GetPosition();
 	}
 }
 
@@ -91,7 +90,7 @@ bool TickableMonster::IsActive()
 			return bIsActive;
 		}
 		bIsActive = framework.IsInScreenArea(position, 
-			framework.GetSpriteSize(spriteInfos.at(spriteToDraw).sprite));
+			spriteInfos.at(spriteToDraw).sprite);
 	}
 	return bIsActive;
 }
@@ -106,7 +105,7 @@ void TickableMonster::OnJumpFrom(PlayerDoodle& other)
 	if (dyingAnimationTime < 0.f) {
 		dyingAnimationTime = 0.f;
 		velocity.x = 0.f;
-		velocity.y = 150.f;
+		velocity.y = dyingVerticalSpeed;
 		framework.IncreaseMonstersKilledCounter();
 	}
 }
@@ -131,59 +130,15 @@ void TickableMonster::ReceiveTick(float deltaTime)
 	position += velocity * deltaTime;
 	idleAnimationTime = std::fmodf(idleAnimationTime + deltaTime, idleAnimationPeriod);
 	if (velocity.x) {
-		//REDO
-		/*if (position.x + defaultSpriteInfo.offset.x > framework.GetSize().x && velocity.x > 0.f) {
-			position.x = framework.GetSize().x - defaultSpriteInfo.offset.x;
+		float oldPos = { position.x };
+		position.x = std::clamp(position.x, spriteInfos.at(spriteToDraw).offset.x, 
+			framework.GetSize().x - spriteInfos.at(spriteToDraw).offset.x);
+		if (oldPos != position.x) {
 			velocity.x *= -1;
+			spriteToDraw = (velocity.x < 0.f);
 		}
-		else {
-			if (position.x - defaultSpriteInfo.offset.x < 0.f && velocity.x < 0.f) {
-				position.x = defaultSpriteInfo.offset.x;
-				velocity.x *= -1;
-			}
-		}*/
 	}
 }
-
-/*bool TickableMonster::Init(MonsterType _type)
-{
-	if (type == MonsterType::MT_COUNT) {
-		std::shared_ptr<Sprite> tempSprite;
-		Vector2D tempVec;
-		switch (_type) {
-		case MonsterType::MT_Static:
-			if (framework.GetSprite(SpritePaths::staticMonsterDying, tempSprite)) {
-				getSpriteSize(tempSprite.get(), tempVec.x, tempVec.y);
-				dyingSpriteInfo.sprite = tempSprite;
-				dyingSpriteInfo.offset = static_cast<Vector2Df>(tempVec) * 0.5f;
-			}
-			else {
-				DJLog("aborting staticMonster init");
-				return false;
-			}
-			break;
-		case MonsterType::MT_Movable:
-			if (framework.GetSprite(SpritePaths::movableMonsterRight, tempSprite)) {
-				getSpriteSize(tempSprite.get(), tempVec.x, tempVec.y);
-				dyingSpriteInfo.sprite = tempSprite;
-				dyingSpriteInfo.offset = static_cast<Vector2Df>(tempVec) * 0.5f;
-				velocity.x = -125.f;
-			}
-			else {
-				DJLog("aborting staticMonster init");
-				return false;
-			}
-			break;
-		default:
-			assert(false && "TickableMonster reported wrong platfrom type");
-			return false;
-			break;
-		}
-		type = _type;
-		return true;
-	}
-	return false;
-}*/
 
 bool TickableMonster::Reactivate(const Vector2Df& pos)
 {
@@ -192,9 +147,9 @@ bool TickableMonster::Reactivate(const Vector2Df& pos)
 		return false;
 	}
 	dyingAnimationTime = -1.f;
-	position = pos;
-	switch (type)
-	{
+	position.x = pos.x;
+	position.y = pos.y - collisionInfo.halfSize.y * 1.1f;
+	switch (type) {
 	case MonsterType::MT_Movable:
 		velocity.y = 0.f;
 		velocity.x = movableMonsterXSpeed;
@@ -204,5 +159,6 @@ bool TickableMonster::Reactivate(const Vector2Df& pos)
 		break;
 	}
 	bIsActive = true;
+	spriteToDraw = 0;
 	return IsActive();
 }

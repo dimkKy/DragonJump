@@ -10,7 +10,9 @@ Hole::Hole(DragonJumpFramework& _framework, const Vector2Df& _position) :
 {
 	if (framework.GetSpriteInfo(SpritePaths::hole, sprite)) {
 		sprite.offset *= 0.5f;
-		collisionInfo.radiusSquared = sprite.offset.LengthSquared() * 0.25f;
+		//?!
+		position.y += sprite.offset.y * 1.1f;
+		collisionInfo.radiusSquared = sprite.offset.LengthSquared() * 0.27f;
 	}
 	else {
 		bIsActive = false;
@@ -21,7 +23,9 @@ Hole::Hole(DragonJumpFramework& _framework, const Vector2Df& _position) :
 bool Hole::Reactivate(const Vector2Df& newPosition)
 {
 	if (Collidable::IsActive()) {
-		position = newPosition;
+		position.x = newPosition.x;
+		//?!
+		position.y = newPosition.y + sprite.offset.y * 1.1f;
 		bIsActive = true;
 	}
 	return bIsActive;
@@ -37,13 +41,6 @@ bool Hole::DrawIfActive_Internal()
 		return false;
 	}
 }
-
-/*void Hole::ReceiveCollision(Collidable& other)
-{
-	if (PlayerDoodle * playerDoodle{ dynamic_cast<PlayerDoodle*>(&other) }) {
-		playerDoodle->StartFallingInTheHole(*this);
-	}
-}*/
 
 bool Hole::IsActive()
 {

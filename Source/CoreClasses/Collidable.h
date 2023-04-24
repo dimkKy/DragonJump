@@ -26,8 +26,7 @@ struct RectangleShape : private Shape
 	RectangleShape() {};
 	template<class...Args>
 	RectangleShape(Args&...args) : 
-		halfSize{ args } 
-	{
+		halfSize{ args } {
 		assert(halfSize.x > 0.f && halfSize.y > 0.f && "size must be positive");
 	};
 	Vector2Df halfSize;
