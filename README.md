@@ -1,5 +1,5 @@
 ## DragonJump
-![demo gif 1](https://i.imgur.com/TOdKfpU.gif)
+<img src='dimkkyDJdemo1.gif'>
 
 ### Features
 * Physics-driven character movement;
@@ -9,7 +9,7 @@
 * Automatic memory management using smart pointers;
 * Animations;
 
-![demo gif 2](https://i.imgur.com/qzSjCYD.gif)
+<img src='dimkkyDJdemo2.gif'>
 
 ### Compatibility
 **C++20** compatible compiler is required. I'm not sure if I legally allowed to share dlls, so they will not be provided.
