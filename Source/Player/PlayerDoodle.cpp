@@ -14,26 +14,41 @@ const float PlayerDoodle::jumpHeight = PlayerDoodle::CalculateJumpHeight();
 
 PlayerDoodle::PlayerDoodle(DragonJumpFramework& _framework, const Vector2Df& pos) :
 	Drawable(_framework, pos), Tickable(0.f, jumpingVelocity * 2.f), 
-	sprites{ framework.GetNumberedSprites(SpritePaths::doodle) }
+	sprites{ framework.GetNumberedSprites(SpritePaths::doodle) },
+	knockoutSprites{ framework.GetNumberedSprites(SpritePaths::knockoutStars) },
+	jetSprites{ framework.GetNumberedSprites(SpritePaths::jetpack) }
 {
-	if (sprites.size() < 6) {
+	if (sprites.size() < 8 || knockoutSprites.size() < 1 || 
+		jetSprites.size() < 2 || jetSprites.size() % 2 == 1) {
 		bIsActive = false;
 		sprites.clear();
+		knockoutSprites.clear();
+		jetSprites.clear();
 		DJLog("player doodle: sprites loading failed");
 		return;
 	}
 	SetOffsets();
 	sprites.at(4).offset *= 0.5f;
 	sprites.at(5).offset *= 0.5f;
+
 	collisionInfo.halfSize = sprites.at(5).offset;
 
-	if (sprites.size() > 6) {
-		sprites.at(6).offset.x *= 0.5f;
-		sprites.at(6).offset.y *= 1.65f;
+	sprites.at(6).offset.x *= 0.5f;
+	sprites.at(6).offset.y *= 1.65f;
+	sprites.at(7).offset.x *= 0.5f;
+	sprites.at(7).offset.y *= 0.45f;
+
+	for (auto& sprite : knockoutSprites) {
+		sprite.offset.x *= 0.5f;
 	}
-	if (sprites.size() > 7) {
-		sprites.at(7).offset.x *= 0.5f;
-		sprites.at(7).offset.y *= -1.65f;
+	for (auto i{ 0 }; i < jetSprites.size(); ++i) {
+		if (i % 2) {
+			jetSprites.at(i).offset.x *= 1.2f;
+		}
+		else {
+			jetSprites.at(i).offset.x *= -0.2f;
+		}
+		jetSprites.at(i).offset.y *= 0.3f;
 	}
 }
 bool PlayerDoodle::DrawIfActive(float cameraVerticalOffset)
@@ -58,7 +73,7 @@ bool PlayerDoodle::Reactivate(const Vector2Df& positionX_velocityY)
 		else
 			velocity.y = positionX_velocityY.y;
 		velocity.x = 0.f;
-		knockoutAnimationTimeLeft = -1.f;
+		knockoutAnimTime = -1.f;
 		fallingAnimationTimeLeft = -1.f;
 		lastFaceDirection = false;
 		standingTimeLeft = -1.f;
@@ -103,11 +118,6 @@ int PlayerDoodle::ProcessDraw()
 		setSpriteSize(spriteInfo.sprite.get(), size.x, size.y);
 		return spriteToDraw;
 	}
-
-	if (!bIsActive) {
-
-		//knockout
-	}
 	//ugly
 	int spriteToDraw{ static_cast<int>(lastFaceDirection) };
 	if (bIsAiming) {
@@ -122,9 +132,34 @@ int PlayerDoodle::ProcessDraw()
 			lastFaceDirection;
 	}
 	sprites.at(spriteToDraw).Draw(position);
+	//
+	if (!bIsActive) {
+		knockoutAnimTime = std::fmodf(knockoutAnimTime,
+			knockoutAnimDuration);
+		knockoutSprites.at(static_cast<int>(
+			knockoutAnimTime * knockoutSprites.size() / knockoutAnimDuration)).Draw(position);
+		return spriteToDraw;
+	}
+
 	if (bIsAiming) {
-		//draw mouth
-		//sprites.at(6).Draw({ position.x, position.y });
+		if (framework.GetMousePosition().y <= position.y) {
+			sprites.at(6).Draw(position);
+		}
+		else {
+			sprites.at(7).Draw(position);
+		}
+	}
+	if (auto r{ activeAbilities.find(AbilityType::AT_Jet) }; r != activeAbilities.end()) {
+		if (r->second > 0.f) {
+			float animTime{ std::fmodf(r->second, Ability::jetAnimDuration) };
+			int frames{ static_cast<int>(jetSprites.size()) / 2 };
+			int jetSpriteToDraw{ 2 * static_cast<int>(animTime * frames / Ability::jetAnimDuration)
+			+ (spriteToDraw % 2) };
+			jetSprites.at(jetSpriteToDraw).Draw(position);
+		}
+		else {
+
+		}
 	}
 	return spriteToDraw;
 }
@@ -157,24 +192,7 @@ void PlayerDoodle::ReceiveTick(float deltaTime)
 		fallingAnimationTimeLeft -= deltaTime;*/
 		return;
 	}
-	if (standingTimeLeft > -0.f) {
-		standingTimeLeft -= deltaTime;
-		if (standingTimeLeft > +0.f) {
-			return;	
-		}
-		DJLog("stop standing");
-		deltaTime = -standingTimeLeft;
-		velocity.y = jumpingVelocity;
-		AddImpulse({ 0.f, jumpImpulse * mass }, jumpImpulseDuration);
-		standingTimeLeft = -1.f;
-		//std::invoke(onJumpDelegate, *this);
-		standingOn->OnJumpFrom(*this);
-		if (Platform * platform{ dynamic_cast<Platform*>(standingOn) }) {
-			framework.IncreaseJumpsCounter();
-		}
-		standingOn = nullptr;
-	}
-
+	//
 	for (auto it{ activeAbilities.begin() }; it != activeAbilities.end(); ) {
 		if ((*it).second <= deltaTime) {
 			Ability::OnAbilityTick(*this, (*it).first, (*it).second);
@@ -201,6 +219,30 @@ void PlayerDoodle::ReceiveTick(float deltaTime)
 	}
 	velocity += resultingForce / mass;
 	DampCurrentVelocity(deltaTime, resultingForce.LengthSquared());
+	//
+	if (knockoutAnimTime >= 0.f) {
+		knockoutAnimTime += deltaTime;
+		return;
+	}
+	//
+	if (standingTimeLeft > -0.f) {
+		standingTimeLeft -= deltaTime;
+		if (standingTimeLeft > +0.f) {
+			return;
+		}
+		DJLog("stop standing");
+		deltaTime = -standingTimeLeft;
+		velocity.y = jumpingVelocity;
+		AddImpulse({ 0.f, jumpImpulse * mass }, jumpImpulseDuration);
+		standingTimeLeft = -1.f;
+		//std::invoke(onJumpDelegate, *this);
+		standingOn->OnJumpFrom(*this);
+		if (Platform * platform{ dynamic_cast<Platform*>(standingOn) }) {
+			framework.IncreaseJumpsCounter();
+		}
+		standingOn = nullptr;
+	}
+
 	return;
 }
 
@@ -256,15 +298,14 @@ void PlayerDoodle::ReceiveCollision(CollidableBase& other)
 				position.y = steppable->GetStandingPointY(position.x) - sprites.at(2).offset.y;
 				standingOn = steppable;
 			}
-			return;
 		}
 	}
 	if (activeAbilities.size() < 1) {
 		if (MonsterBase* mosnter{ dynamic_cast<MonsterBase*>(&other) }) {
 			//knockout
-			velocity.y = jumpingVelocity * -0.75f;
+			velocity.y = jumpingVelocity * -0.5f;
 			activeForces.clear();
-			knockoutAnimationTimeLeft = knockoutAnimationDuration;
+			knockoutAnimTime = 0.f;
 			StartDying();
 		}
 	}

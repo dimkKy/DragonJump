@@ -23,7 +23,7 @@ protected:
 };
 struct RectangleShape : private Shape
 {
-	RectangleShape() {};
+	RectangleShape() : halfSize{} {};
 	template<class...Args>
 	RectangleShape(Args&...args) : 
 		halfSize{ args } {

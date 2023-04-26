@@ -35,25 +35,6 @@ public:
 		}
 		DispatchTicks(deltaTime, vecs...);
 	}
-
-	/*template<class TDrawable>
-		requires std::is_base_of<Drawable, TDrawable>::value
-	static void DispatchDrawcalls(float cameraVerticalOffset, std::vector<std::shared_ptr<TDrawable>>& vec) {
-		for (auto& drawable : vec) {
-			drawable->DrawIfActive(cameraVerticalOffset);
-		}
-	}
-	template<typename FDrawable, typename...SDrawable>
-		requires std::is_base_of<Drawable, FDrawable>::value &&
-	((std::is_base_of<Drawable, SDrawable>::value) &&...)
-		static void DispatchDrawcalls(float cameraVerticalOffset, std::vector<std::shared_ptr<FDrawable>>& vec,
-			std::vector<std::shared_ptr<SDrawable>>&...vecs) {
-		for (auto& drawable : vec) {
-			drawable->DrawIfActive(cameraVerticalOffset);
-		}
-		DispatchDrawcalls(cameraVerticalOffset, vecs...);
-	}*/
-
 protected:
 	template<class...Args>
 	Tickable(const Args&...args) : 

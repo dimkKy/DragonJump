@@ -284,7 +284,7 @@ struct PlayerState {
 	}
 protected:
 #ifdef NDEBUG
-	static constexpr int lifes = 5;
+	static constexpr int lifes = 4;
 #else
 	static constexpr int lifes = 2;
 #endif
@@ -408,7 +408,11 @@ protected:
 	int monstersKilledSinceAbilitySpawn;
 	int lastDisplayedJumps;
 
+#ifdef NDEBUG
 	static constexpr int abilityCost = 5;
+#else
+	static constexpr int abilityCost = 3;
+#endif
 
 	template<class TDrawable>
 		requires std::is_base_of<Drawable, TDrawable>::value

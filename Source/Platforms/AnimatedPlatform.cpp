@@ -157,6 +157,7 @@ bool AnimatedPlatform::DrawIfActive_Internal()
 			return false;
 		}
 	}
+	//WEAK PLATFORM INCORRECT DRAW
 	int spriteToDraw{ timeFromAnimStart < 0.f ? -1 :
 			static_cast<int>(timeFromAnimStart * animSprites.size() / animationDuration) };
 
@@ -189,7 +190,8 @@ bool AnimatedPlatform::OnAnimEnded()
 		return false;
 	}
 	else {
-		if (type != PlatformType::PT_Invisible) {
+		if (type != PlatformType::PT_Invisible && 
+			type != PlatformType::PT_Weak) {
 			bIsActive = false;
 		}
 		return true;

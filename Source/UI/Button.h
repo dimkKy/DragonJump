@@ -9,7 +9,6 @@
 class Button : public Clickable
 {
 public:
-	//template<class...Args>
 	Button(DragonJumpFramework& _framework, const Vector2Df& position, const std::string& spritePath);
 		
 	[[maybe_unused]] virtual bool DrawIfActive(float cameraVerticalOffset) override

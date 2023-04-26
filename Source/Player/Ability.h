@@ -33,6 +33,8 @@ public:
 	virtual bool GetCollisionResponse(CollisionChannel channel) const override 
 		{ return channel == CollisionChannel::CC_Player; };
 	void ReceiveCollision(Collidable& other) {};
+
+	static constexpr float jetAnimDuration = 0.75f;
 protected:
 	virtual bool DrawIfActive_Internal() override;
 	SpriteInfo sprite;

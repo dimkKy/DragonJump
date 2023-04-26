@@ -115,8 +115,8 @@ void TickableMonster::ReceiveTick(float deltaTime)
 	if (dyingAnimationTime >= 0.f) {
 		dyingAnimationTime += deltaTime;
 		if (velocity.y > 0.f) {
-			if (dyingAnimationTime >= knockoutAnimationDuration) {
-				dyingAnimationTime = std::fmodf(dyingAnimationTime, knockoutAnimationDuration);
+			if (dyingAnimationTime >= knockoutAnimDuration) {
+				dyingAnimationTime = std::fmodf(dyingAnimationTime, knockoutAnimDuration);
 			}
 			position.y += velocity.y * deltaTime;
 		}

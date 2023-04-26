@@ -11,7 +11,7 @@ namespace ThemePaths {
 namespace SpritePaths {
 	inline constexpr const char* hole = "data/hole.png";
 	inline constexpr const char* doodle = "data/doodle.png";
-	inline constexpr const char* knockoutStars = "knockoutStars.png";
+	inline constexpr const char* knockoutStars = "data/knockoutStars.png";
 
 	inline constexpr const char* defaultPlatform = "data/defaultPlatform.png";
 	inline constexpr const char* weakPlatform = "data/weakPlatform.png";
@@ -25,6 +25,7 @@ namespace SpritePaths {
 	inline constexpr const char* projectile = "data/projectile.png";
 	inline constexpr const char* startButton = "data/startButton.png";
 	inline constexpr const char* jetAbility = "data/jetAbility.png";
+	inline constexpr const char* jetpack = "data/jetpack.png";
 	inline constexpr const char* shieldAbility = "data/shieldAbility.png";
 	inline constexpr const char* digitNums = "data/digit.png";
 	inline constexpr const char* lifeIcon = "data/lifeIcon.png";

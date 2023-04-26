@@ -46,5 +46,5 @@ float IntDisplayer::GetWidgetHeight() const
 			height = digit.offset.x;
 		}
 	}
-	return height;
+	return height * 1.1f;
 }

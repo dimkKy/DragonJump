@@ -95,16 +95,18 @@ void DragonJumpFramework::PreInit(int& width, int& height, bool& fullscreen)
 
 bool DragonJumpFramework::Init()
 {
+	DJLog("Init");
 	getScreenSize(screenSize.x, screenSize.y);
+
 	std::shared_ptr<Sprite> tempSprite;
 	if (!GetSprite(SpritePaths::defaultPlatform, tempSprite)) {
 		DJLog("defaultPlatform sprite not found, aborting");
 		return false;
 	}
+
 	Vector2D platfromSize{ GetSpriteSize(tempSprite) };
 	float desiredSizeX{ screenSize.x / platformsInScreenWidth };
 	spriteScale = desiredSizeX / platfromSize.x;
-
 	setSpriteSize(tempSprite.get(), 
 		static_cast<int>(desiredSizeX + 0.5f), static_cast<int>(platfromSize.y * spriteScale + 0.5f));
 
@@ -112,6 +114,7 @@ bool DragonJumpFramework::Init()
 		DJLog("projectile sprite not found, aborting");
 		return false;
 	}
+
 	Vector2Df playerSpawnPos{ 0, screenSize.y + platfromSize.y };
 	if (bWithMenu) {
 		playerSpawnPos.x = static_cast<float>(platfromSize.x);
@@ -128,9 +131,11 @@ bool DragonJumpFramework::Init()
 		DJLog("UI creation unsuccessfull, aborting");
 		return false;
 	}
+
 #ifdef ORIGINAL_SHOOTING
 	srand(static_cast<unsigned int>(time(NULL)));
 #endif
+
 	return true;
 }
 
@@ -194,8 +199,7 @@ void DragonJumpFramework::onKeyReleased(FRKey key)
 
 bool DragonJumpFramework::GetSprite(const std::string& path, std::shared_ptr<Sprite>& outSprite) 
 {
-	if (auto result{ loadedSprites.find(path) }; 
-		result != loadedSprites.end()) {
+	if (auto result{ loadedSprites.find(path) }; result != loadedSprites.end()) {
 		outSprite = result->second;
 		return true;
 	}
@@ -373,14 +377,12 @@ void DragonJumpFramework::SpawnStartingScene()
 		}
 		//still ugly
 		SpawnAbility(*platforms.back().get(), AbilityType::AT_Jet, 0);
-		SpawnPlatform({ screenSize.x * 0.25f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f}, PlatformType::PT_Invisible);
-		SpawnPlatform({ screenSize.x * 0.15f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f }, PlatformType::PT_Trampoline);
-		/*SpawnMonster(
-			*SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f }, PlatformType::PT_SelfDestuct),
-			MonsterType::MT_Hole);
+		SpawnPlatform({ screenSize.x * 0.25f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f}, PlatformType::PT_Invisible);
+		SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PlatformType::PT_OneOff);	
 		SpawnMonster(
-			*SpawnPlatform({ screenSize.x * 0.75f, platPos.y -= PlayerDoodle::jumpHeight * 0.5f }, PlatformType::PT_Trampoline),
-			MonsterType::MT_Movable);*/
+			*SpawnPlatform({ screenSize.x * 0.75f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PlatformType::PT_Trampoline),
+			MonsterType::MT_Movable);
+		SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PlatformType::PT_SelfDestuct);
 		lastPlatformPos.y = platPos.y;
 		TryAddEntities();
 	}
@@ -391,10 +393,9 @@ void DragonJumpFramework::OnStartButtonClicked()
 	DJLog("start");
 	bInMenu = false;
 	tickFunction = &DragonJumpFramework::BeginPlay;
-	for (auto& drawable : platforms)
-		drawable->Deactivate();
-	for (auto& drawable : tickablePlatforms)
-		drawable->Deactivate();
+	lastDisplayedJumps = 0;
+	playerState.Reset();
+	ClearAll(platforms, tickablePlatforms);
 }
 
 void DragonJumpFramework::SubstepWorldTicks(float deltaTime)
@@ -512,7 +513,7 @@ bool DragonJumpFramework::GameplayTick()
 	SubstepPlayerTickAndCollisions(deltaTime, true);
 	float cameraOffset{ 0.f };
 	float playerPosY{ playerDoodle->GetPosition().y };
-	if (float screenhalfY{ static_cast<float>(screenSize.y) * 0.5f }; playerDoodle->IsActive() && 
+	if (float screenhalfY{ static_cast<float>(screenSize.y) * 0.6f }; playerDoodle->IsActive() && 
 		playerPosY <= screenhalfY && playerDoodle->GetVelocity().y <= 0.f) {
 		cameraOffset = screenhalfY - playerPosY + 0.5f;
 		playerState.distancePassed += cameraOffset;
