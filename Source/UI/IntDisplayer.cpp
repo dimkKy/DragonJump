@@ -31,7 +31,7 @@ bool IntDisplayer::DrawIfActive_Internal ()
 }
 
 
-bool IntDisplayer::Reactivate(const Vector2Df& pos)
+bool IntDisplayer::Reactivate(const Vector2Df& pos) &
 {
 	position = pos;
 	bIsActive = digits.size() == 10 && position.x <= 0.f && position.y >= framework.GetSize().y;

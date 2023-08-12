@@ -19,9 +19,9 @@ public:
 	virtual void SetPosition(const Vector2Df& p)
 		{ position = p; }
 
-	[[nodiscard]] virtual bool Reactivate(const Vector2Df& v) = 0;
+	[[nodiscard]] virtual bool Reactivate(const Vector2Df& v) & = 0;
 
-	virtual void Deactivate() 
+	virtual void Deactivate() & 
 		{ bIsActive = false; };
 
 	template<class TDrawable>
@@ -41,6 +41,8 @@ public:
 		}
 		DispatchDrawcalls(cameraVerticalOffset,vecs...);
 	}
+
+	virtual ~Drawable() = default;
 
 protected:
 	template<class...Args>

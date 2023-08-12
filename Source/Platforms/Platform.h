@@ -29,15 +29,18 @@ public:
 	Platform(DragonJumpFramework& _framework, const Vector2Df& pos);
 
 	virtual bool IsActive() override;
-	virtual bool Reactivate(const Vector2Df& position) override;
+	virtual bool Reactivate(const Vector2Df& position) & override;
 
-	virtual CollisionChannel GetCollisionChannel() const override { return CollisionChannel::CC_Platform; };
-	virtual bool GetCollisionResponse(CollisionChannel channel) const override { return channel == CollisionChannel::CC_Player; };
+	virtual CollisionChannel GetCollisionChannel() const override 
+		{ return CollisionChannel::CC_Platform; };
+	virtual bool GetCollisionResponse(CollisionChannel channel) const override 
+		{ return channel == CollisionChannel::CC_Player; };
 	
 	virtual void OnJumpFrom(PlayerDoodle& other) override {};
 protected:
 	Platform(DragonJumpFramework& _framework) : 
 		Drawable(_framework) {};
+
 	[[maybe_unused]] virtual bool DrawIfActive_Internal() override;
 	SpriteInfo defaultSprite;
 };

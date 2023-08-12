@@ -20,7 +20,7 @@ Hole::Hole(DragonJumpFramework& _framework, const Vector2Df& _position) :
 	assert(bIsActive && "Hole init unsuccessfull");
 }
 
-bool Hole::Reactivate(const Vector2Df& newPosition)
+bool Hole::Reactivate(const Vector2Df& newPosition) &
 {
 	if (Collidable::IsActive()) {
 		position.x = newPosition.x;
@@ -45,7 +45,6 @@ bool Hole::DrawIfActive_Internal()
 bool Hole::IsActive()
 {
 	if (Collidable::IsActive()) {
-		//check out of bounds
 		bIsActive = framework.IsInScreenArea(position, 
 			framework.GetSpriteSize(sprite.sprite));
 	}

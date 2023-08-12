@@ -50,7 +50,6 @@ struct CircleShape : private Shape
 class CollidableBase : public virtual Drawable 
 {
 public:
-	virtual bool IsActive() = 0;
 	virtual void ReceiveCollision(CollidableBase& other) {};
 	virtual CollisionChannel GetCollisionChannel() const = 0;
 	virtual bool GetCollisionResponse(CollisionChannel channel) const = 0;

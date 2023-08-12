@@ -14,7 +14,7 @@ Ability::Ability(DragonJumpFramework& _framework, const Vector2Df& _position, Ab
 		path = SpritePaths::jetAbility;
 		break;
 	case AbilityType::AT_Shield:
-		path = SpritePaths::jetAbility;
+		path = SpritePaths::shieldAbility;
 		break;
 	default:
 		bIsActive = false;
@@ -33,7 +33,7 @@ Ability::Ability(DragonJumpFramework& _framework, const Vector2Df& _position, Ab
 	assert(bIsActive && "Ability init unsuccessfull");
 }
 
-bool Ability::Reactivate(const Vector2Df& pos)
+bool Ability::Reactivate(const Vector2Df& pos) &
 {
 	position.x = pos.x;
 	//?!

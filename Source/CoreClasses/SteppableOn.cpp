@@ -10,7 +10,7 @@ template <> float SteppableOn<RectangleShape>::GetStandingPointY(
 
 template <> float SteppableOn<CircleShape>::GetStandingPointY(
 	const float& inX, bool modeRelative) const {
-	float xDistSqrd{ modeRelative ? inX * inX : std::powf(inX - position.x, 2) };
+	float xDistSqrd{ modeRelative ? inX * inX : std::powf(inX - position.x, 2.f) };
 	return modeRelative ? -sqrtf(collisionInfo.radiusSquared - xDistSqrd) :
 		position.y - sqrtf(collisionInfo.radiusSquared - xDistSqrd);
 }

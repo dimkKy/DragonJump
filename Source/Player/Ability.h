@@ -20,13 +20,12 @@ public:
 		{ return type; };
 
 	static void OnAbilityTick(PlayerDoodle& doodle, AbilityType _type, float deltaTime);
-	//static void OnAbilityDraw(PlayerDoodle& doodle, AbilityType _type);
 
 	static float GetAbilityDuration(AbilityType _type);
 	float GetAbilityDuration() const
 		{ return GetAbilityDuration(type);};
 	virtual bool IsActive() override;
-	virtual bool Reactivate(const Vector2Df& pos) override;
+	virtual bool Reactivate(const Vector2Df& pos) & override;
 	
 	virtual CollisionChannel GetCollisionChannel() const override 
 		{ return CollisionChannel::CC_Pikup; };

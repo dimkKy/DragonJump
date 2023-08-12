@@ -2,11 +2,7 @@
 
 #pragma once
 
-/* stringview?
-namespace ThemePaths {
-	inline constexpr const char* paper = "data/paper/";
-	inline constexpr const char* football = "data/football/";
-}*/
+// stringview?
 
 namespace SpritePaths {
 	inline constexpr const char* hole = "data/hole.png";

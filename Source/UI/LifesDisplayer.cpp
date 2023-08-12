@@ -18,7 +18,7 @@ LifesDisplayer::LifesDisplayer(DragonJumpFramework& _framework, const Vector2Df&
     assert(bIsActive && "LifesDisplayer init unsuccessfull");
 }
 
-bool LifesDisplayer::Reactivate(const Vector2Df& pos)
+bool LifesDisplayer::Reactivate(const Vector2Df& pos) &
 {
     position = pos;
     if (!sprite || position.y >= framework.GetSize().y ||

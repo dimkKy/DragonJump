@@ -19,7 +19,7 @@ Platform::Platform(DragonJumpFramework& _framework, const Vector2Df& pos) :
 	assert(bIsActive && "Ability init unsuccessfull");
 }
 
-bool Platform::Reactivate(const Vector2Df& pos)
+bool Platform::Reactivate(const Vector2Df& pos) &
 {
 	position = pos;
 	bIsActive = true;

@@ -14,12 +14,12 @@ public:
 	[[maybe_unused]] virtual bool DrawIfActive(float cameraVerticalOffset) override
 		{ return IsActive() ? DrawIfActive_Internal() : false; };
 
-	virtual bool Reactivate(const Vector2Df& pos) override ;
+	virtual bool Reactivate(const Vector2Df& pos) & override;
 
 	virtual bool OnMouseButtonClick(const Vector2D& clickPos, bool bReleased)
 		{ return bReleased ? OnMouseButtonUp(clickPos) : OnMouseButtonDown(clickPos); }
-	virtual bool OnMouseButtonDown(const Vector2D& clickPos) override;
-	virtual bool OnMouseButtonUp(const Vector2D& clickPos) override;
+	virtual bool OnMouseButtonDown(const Vector2D& clickPos) & override;
+	virtual bool OnMouseButtonUp(const Vector2D& clickPos) & override;
 	
 	std::function<void()> onClicked;
 private:

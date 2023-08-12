@@ -110,7 +110,7 @@ void TickableMonster::OnJumpFrom(PlayerDoodle& other)
 	}
 }
 
-void TickableMonster::ReceiveTick(float deltaTime)
+void TickableMonster::ReceiveTick(float deltaTime) &
 {
 	if (dyingAnimationTime >= 0.f) {
 		dyingAnimationTime += deltaTime;
@@ -140,7 +140,7 @@ void TickableMonster::ReceiveTick(float deltaTime)
 	}
 }
 
-bool TickableMonster::Reactivate(const Vector2Df& pos)
+bool TickableMonster::Reactivate(const Vector2Df& pos) &
 {
 	if (type == MonsterType::MT_COUNT) {
 		bIsActive = false;

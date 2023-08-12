@@ -23,7 +23,7 @@ Projectile::Projectile(DragonJumpFramework& _framework, const Vector2Df& target)
 	assert(bIsActive && "Ability init unsuccessfull");
 }
 
-bool Projectile::Reactivate(const Vector2Df& target)
+bool Projectile::Reactivate(const Vector2Df& target) &
 {
 	if (collisionInfo) {
 		position = framework.GetPlayerDoodle()->GetMouthGlobalPos();
@@ -71,7 +71,7 @@ bool Projectile::DrawIfActive_Internal()
 	}
 }
 
-void Projectile::ReceiveTick(float deltaTime)
+void Projectile::ReceiveTick(float deltaTime) &
 {
 	assert(IsActive() && "Projectile: tick received while inactive");
 	position += velocity * deltaTime;

@@ -8,7 +8,7 @@ class Tickable : public virtual Drawable
 {
 public:
 	//dispatcher is responsible for checking isActive
-	virtual void ReceiveTick(float deltaTime) = 0;
+	virtual void ReceiveTick(float deltaTime) & = 0;
 	[[nodiscard]] virtual Vector2Df GetVelocity() const 
 		{ return velocity; };
 	[[nodiscard]] virtual float GetMaxTickDeltaTime() const 

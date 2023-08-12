@@ -2,6 +2,7 @@
 
 #include "Button.h"
 #include <cassert>
+
 Button::Button(DragonJumpFramework& _framework, 
     const Vector2Df& position, const std::string& spritePath) :
     Drawable(_framework, position), bIsPressed{ false },
@@ -33,7 +34,7 @@ bool Button::DrawIfActive_Internal()
     return true;
 }
 
-bool Button::Reactivate(const Vector2Df& pos)
+bool Button::Reactivate(const Vector2Df& pos) &
 {
     position = pos;
     bIsActive = sprites.size() == 2 && 
@@ -41,7 +42,7 @@ bool Button::Reactivate(const Vector2Df& pos)
     return bIsActive;
 }
 
-bool Button::OnMouseButtonDown(const Vector2D& clickPos)
+bool Button::OnMouseButtonDown(const Vector2D& clickPos) &
 {
     assert(bIsActive);
     if (bIsPressed)
@@ -56,7 +57,7 @@ bool Button::OnMouseButtonDown(const Vector2D& clickPos)
     }
 }
 
-bool Button::OnMouseButtonUp(const Vector2D& clickPos)
+bool Button::OnMouseButtonUp(const Vector2D& clickPos) &
 {
     assert(bIsActive);
     if (!bIsPressed)

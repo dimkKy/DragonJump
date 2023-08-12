@@ -77,7 +77,7 @@ bool AnimatedPlatform::IsActive()
 	return bIsActive;
 }
 
-bool AnimatedPlatform::Reactivate(const Vector2Df& pos)
+bool AnimatedPlatform::Reactivate(const Vector2Df& pos) &
 {
 	if (Platform::Reactivate(pos)) {
 		velocity = 0.f;
@@ -87,7 +87,7 @@ bool AnimatedPlatform::Reactivate(const Vector2Df& pos)
 	return bIsActive;
 }
 
-void AnimatedPlatform::ReceiveTick(float deltaTime)
+void AnimatedPlatform::ReceiveTick(float deltaTime) &
 {
 	if (timeFromAnimStart >= 0.f && timeFromAnimStart < animationDuration) {
 		timeFromAnimStart += deltaTime;

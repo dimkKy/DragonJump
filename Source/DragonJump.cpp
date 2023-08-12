@@ -23,11 +23,15 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
+
 	DragonJumpFramework* framework{ nullptr };
-	if (sizeX == 0 || sizeY == 0) 
+	if (sizeX == 0 || sizeY == 0) {
 		framework = new DragonJumpFramework{ true };
-	else 
+	}	
+	else {
 		framework = new DragonJumpFramework{ true, sizeX, sizeY };
+	}	
 	run(framework);
+
 	return 0;
 }

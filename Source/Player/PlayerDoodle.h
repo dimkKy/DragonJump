@@ -25,10 +25,10 @@ public:
 		{ return standingTimeLeft >= 0.f && standingOn; };
 
 	[[nodiscard]] virtual bool DrawIfActive(float cameraVerticalOffset) override;
-	virtual bool Reactivate(const Vector2Df& positionX_velocityY) override;
+	virtual bool Reactivate(const Vector2Df& positionX_velocityY) & override;
 
-	virtual void ReceiveTick(float deltaTime) override;
-	virtual float GetMaxTickDeltaTime() const override { return 0.02f; };
+	virtual void ReceiveTick(float deltaTime) & override;
+	virtual float GetMaxTickDeltaTime() const override { return maxTickDeltaTime; };
 
 	virtual CollisionChannel GetCollisionChannel() const override;
 	virtual bool GetCollisionResponse(CollisionChannel channel) const override;
@@ -42,12 +42,12 @@ protected:
 	[[maybe_unused]] int ProcessDraw();
 	void DampCurrentVelocity(float deltaTime, float forceLengthSquared);
 	void StartDying();
+
 	std::vector<SpriteInfo> sprites;
 	bool lastFaceDirection = false;
 	float standingTimeLeft = -1.f;
 	std::list<std::pair<Vector2Df, float>> activeForces;
 
-	//std::function<void(PlayerDoodle&)> onJumpDelegate = nullptr;
 	SteppableOnBase* standingOn = nullptr;
 	bool bIsAiming = false;
 	
@@ -63,6 +63,8 @@ protected:
 	void SetOffsets();
 	constexpr static float CalculateJumpHeight();
 	constexpr static float DampInstSpeed(float speed, float dampingMp);
+
+	static constexpr float maxTickDeltaTime = 0.02f;
 
 	static constexpr float knockoutAnimDuration = 0.15f;
 	static constexpr float fallingAnimationDuration = 3.f;

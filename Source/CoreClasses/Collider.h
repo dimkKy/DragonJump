@@ -64,7 +64,7 @@ public:
 			}
 		}
 	}
-	//std::span<std::shared_ptr<SCollidable>>?
+
 protected:
 	template<class FShape, class SShape>
 	[[nodiscard]] static bool DetectCollision(const Collidable<FShape>& first, const Collidable<SShape>& second);

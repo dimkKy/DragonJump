@@ -61,7 +61,7 @@ bool PlayerDoodle::DrawIfActive(float cameraVerticalOffset)
 }
 
 
-bool PlayerDoodle::Reactivate(const Vector2Df& positionX_velocityY)
+bool PlayerDoodle::Reactivate(const Vector2Df& positionX_velocityY) &
 {
 	bIsActive = true;
 	if (Collidable::IsActive()) {
@@ -164,7 +164,7 @@ int PlayerDoodle::ProcessDraw()
 	return spriteToDraw;
 }
 
-void PlayerDoodle::ReceiveTick(float deltaTime)
+void PlayerDoodle::ReceiveTick(float deltaTime) &
 {
 	position += (velocity * deltaTime);
 	position.x = std::fmodf(position.x, 
@@ -177,19 +177,6 @@ void PlayerDoodle::ReceiveTick(float deltaTime)
 		fallingAnimationTimeLeft -= deltaTime;
 		Vector2Df resultingForce{ controllingHole->GetPosition() - position};
 		velocity = resultingForce / fallingAnimationTimeLeft;
-		/*float distSquared{ resultingForce.LengthSquared() };
-		if (distSquared < collisionSize.x * collisionSize.y * 0.11f) {
-			//resultingForce.TurnThisToUnit();
-			velocity = resultingForce * sqrtf(distSquared) / fallingAnimationTimeLeft;
-			//position = controllingHole->GetPosition();
-		}
-		else {
-			resultingForce.TurnThisToUnit();
-			resultingForce *= std::abs(gravityForce * deltaTime * controllingHole->GetForceMultiplier() / distSquared);
-			velocity += resultingForce;
-			DampCurrentVelocity(deltaTime, minVelocityAndForce);
-		}
-		fallingAnimationTimeLeft -= deltaTime;*/
 		return;
 	}
 	//
@@ -235,7 +222,7 @@ void PlayerDoodle::ReceiveTick(float deltaTime)
 		velocity.y = jumpingVelocity;
 		AddImpulse({ 0.f, jumpImpulse * mass }, jumpImpulseDuration);
 		standingTimeLeft = -1.f;
-		//std::invoke(onJumpDelegate, *this);
+
 		standingOn->OnJumpFrom(*this);
 		if (Platform * platform{ dynamic_cast<Platform*>(standingOn) }) {
 			framework.IncreaseJumpsCounter();
@@ -370,7 +357,6 @@ bool PlayerDoodle::StopShooting(Vector2D& outTargetPosition)
 	return true;
 }
 
-//bug?: should be above
 constexpr float PlayerDoodle::DampInstSpeed(float speed, float dampingMp)
 {
 	return speed * dampingMp * speed * speed / mass;

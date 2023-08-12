@@ -11,7 +11,8 @@ public:
 	LifesDisplayer(DragonJumpFramework& _framework, const Vector2Df& pos);
 	[[maybe_unused]] virtual bool DrawIfActive(float cameraYOffset) override
 		{ return IsActive() ? DrawIfActive_Internal() : false; };
-	virtual bool Reactivate(const Vector2Df& pos) override;
+
+	virtual bool Reactivate(const Vector2Df& pos) & override;
 
 protected:
 	virtual bool DrawIfActive_Internal() override;

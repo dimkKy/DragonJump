@@ -11,13 +11,13 @@ public:
 	TickableMonster(DragonJumpFramework& _f, const Vector2Df& pos, MonsterType _type);
 	[[nodiscard]] static float GetMaxTickDeltaTime() { return 0.5f; };
 	[[nodiscard]] virtual Vector2Df GetPosition() const override;
-	virtual void ReceiveCollision(CollidableBase& other);
+	virtual void ReceiveCollision(CollidableBase& other) override;
 	[[nodiscard]] virtual bool IsActive() override;
 
 	[[nodiscard]] virtual bool CanBeSteppedOn() const override ;
-	virtual void OnJumpFrom(PlayerDoodle& other);
-	virtual void ReceiveTick(float deltaTime);
-	[[nodiscard]] virtual bool Reactivate(const Vector2Df& pos) override;
+	virtual void OnJumpFrom(PlayerDoodle& other) override;
+	virtual void ReceiveTick(float deltaTime) & override;
+	[[nodiscard]] virtual bool Reactivate(const Vector2Df& pos) & override;
 
 protected:
 	[[maybe_unused]] virtual bool DrawIfActive_Internal() override;

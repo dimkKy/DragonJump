@@ -8,9 +8,8 @@ class Hole : public Monster<CircleShape>
 {
 public:
 	Hole(DragonJumpFramework& _framework, const Vector2Df& _position);
-	//[[nodiscard]] virtual float GetForceMultiplier() const { return 750.f; };
 
-	[[nodiscard]] virtual bool Reactivate(const Vector2Df& newPosition) override;
+	[[nodiscard]] virtual bool Reactivate(const Vector2Df& newPosition) & override;
 	[[nodiscard]] virtual bool IsActive() override;
 	
 	[[nodiscard]] virtual bool CanBeSteppedOn() const override final 

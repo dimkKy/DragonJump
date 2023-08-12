@@ -16,7 +16,6 @@ public:
 	virtual MonsterType GetMonsterType() const final 
 		{ return type; };
 protected:
-	//MonsterBase() = delete;
 	MonsterBase(MonsterType _type) : 
 		type{ _type } {};
 	MonsterType type;
@@ -28,13 +27,13 @@ class Monster : public SteppableOn<TShape>, public MonsterBase
 public:
 	virtual CollisionChannel GetCollisionChannel() const override 
 		{ return CollisionChannel::CC_Monster; };
+
 	virtual bool GetCollisionResponse(CollisionChannel channel) const override {
 		return channel == CollisionChannel::CC_Projectile || 
 			channel == CollisionChannel::CC_Player; 
 	};
 	
 protected:
-	//Monster() = delete;
 	Monster(MonsterType _type): 
 		MonsterBase(_type) {};
 };
