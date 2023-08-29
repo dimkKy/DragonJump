@@ -11,5 +11,7 @@
 
 <img src='dimkkyDJdemo2.gif'>
 
-### Compatibility
-**C++20** compatible compiler is required. I'm not sure if I legally allowed to share dlls, so they will not be provided.
+### Notes and compatibility
+**C++20** compatible compiler is required. <br />
+I'm not sure if I legally allowed to share dlls, so they will not be provided. <br />
+This solution is rushed and generally not well designed. In particular, there are no exception guarantees. <br />
