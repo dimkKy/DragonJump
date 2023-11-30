@@ -113,7 +113,9 @@ int PlayerDoodle::ProcessDraw()
 		}
 		SpriteInfo& spriteInfo{ sprites.at(spriteToDraw) };
 		Vector2D size{ framework.GetSpriteSize(spriteInfo.sprite) };
-		setSpriteSize(spriteInfo.sprite.get(), static_cast<int>(size.x * scale + 0.5f), static_cast<int>(size.y * scale + 0.5f));
+		setSpriteSize(spriteInfo.sprite.get(), 
+			static_cast<int>(size.x * scale + 0.5f), 
+			static_cast<int>(size.y * scale + 0.5f));
 		spriteInfo.Draw(position + spriteInfo.offset * (1.f - scale));
 		setSpriteSize(spriteInfo.sprite.get(), size.x, size.y);
 		return spriteToDraw;
@@ -235,13 +237,13 @@ void PlayerDoodle::ReceiveTick(float deltaTime) &
 
 CollisionChannel PlayerDoodle::GetCollisionChannel() const
 {
-	return CollisionChannel::CC_Player;
+	return CC::Player;
 }
 
 bool PlayerDoodle::GetCollisionResponse(CollisionChannel channel) const
 {
-	return channel == CollisionChannel::CC_Monster || 
-		(channel == CollisionChannel::CC_Platform && !IsStanding());
+	return channel == CC::Monster || 
+		(channel == CC::Platform && !IsStanding());
 }
 
 void PlayerDoodle::ReceiveCollision(CollidableBase& other)

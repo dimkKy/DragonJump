@@ -12,21 +12,21 @@ AnimatedPlatform::AnimatedPlatform(DragonJumpFramework& _framework, const Vector
 {
 	std::string spriteName;
 	switch (_type) {
-	case PlatformType::PT_OneOff:
+	case PT::OneOff:
 		spriteName = SpritePaths::oneOffPlatform;
 		break;
-	case PlatformType::PT_SelfDestuct:
+	case PT::SelfDestuct:
 		spriteName = SpritePaths::selfDestructPlatform;
 		animationDuration = selfDestuctAnimDuration;
 		break;
-	case PlatformType::PT_Invisible:
+	case PT::Invisible:
 		spriteName = SpritePaths::invisiblePlatform;
 		animationDuration = invisibleAnimDuration;
 		break;
-	case PlatformType::PT_Weak:
+	case PT::Weak:
 		spriteName = SpritePaths::weakPlatform;
 		break;
-	case PlatformType::PT_Trampoline:
+	case PT::Trampoline:
 		spriteName = SpritePaths::defaultPlatform;
 		break;
 	default:
@@ -44,7 +44,7 @@ AnimatedPlatform::AnimatedPlatform(DragonJumpFramework& _framework, const Vector
 		bIsActive = false;
 		return;
 	}
-	if (type == PlatformType::PT_Trampoline) {
+	if (type == PT::Trampoline) {
 		spriteName = SpritePaths::trampolinePlatform;
 	}
 	if (!framework.GetNumberedSprites(spriteName, animSprites)) {
@@ -55,7 +55,7 @@ AnimatedPlatform::AnimatedPlatform(DragonJumpFramework& _framework, const Vector
 	}
 	for (auto& sprite : animSprites) {
 		sprite.offset *= 0.5f;
-		if (type == PlatformType::PT_Trampoline) {
+		if (type == PT::Trampoline) {
 			sprite.offset.y += (defaultSprite.offset.y + sprite.offset.y * 0.85f);
 		}
 	}
@@ -66,7 +66,7 @@ bool AnimatedPlatform::IsActive()
 	if (!Collidable::IsActive()) {
 		return false;
 	}
-	if (type == PlatformType::PT_Trampoline) {
+	if (type == PT::Trampoline) {
 		bIsActive = framework.IsOutOfSideBorder(position,
 			defaultSprite.sprite) == 0 &&
 			position.y - animSprites.at(0).offset.y < framework.GetSize().y;
@@ -93,13 +93,13 @@ void AnimatedPlatform::ReceiveTick(float deltaTime) &
 		timeFromAnimStart += deltaTime;
 	}
 	switch (type) {
-	case PlatformType::PT_Weak:
+	case PT::Weak:
 		if (timeFromAnimStart > 0.f) {
 			position.y += velocity.y * deltaTime;
 			velocity.y += fallingAcceleration * deltaTime;
 		}
 		return;
-	case PlatformType::PT_SelfDestuct:
+	case PT::SelfDestuct:
 		if (timeFromAnimStart < 0.f && 
 			(framework.GetPlayerDoodle()->GetPosition() - position).LengthSquared() < 
 			collisionInfo.halfSize.LengthSquared() * selfDestuctTriggerDistMp) {
@@ -113,13 +113,13 @@ void AnimatedPlatform::ReceiveTick(float deltaTime) &
 
 bool AnimatedPlatform::CanBeSteppedOn() const
 {
-	assert(type != PlatformType::PT_COUNT && "AnimatedPlatform reported wrong platfrom type");
-	return type != PlatformType::PT_Weak;
+	assert(type != PT::PT_COUNT && "AnimatedPlatform reported wrong platfrom type");
+	return type != PT::Weak;
 }
 
 void AnimatedPlatform::ReceiveCollision(CollidableBase& other)
 {
-	if (type != PlatformType::PT_Weak) {
+	if (type != PT::Weak) {
 		return;
 	}
 	if (PlayerDoodle * doodle{ dynamic_cast<PlayerDoodle*>(&other) }) {
@@ -134,10 +134,10 @@ void AnimatedPlatform::ReceiveCollision(CollidableBase& other)
 void AnimatedPlatform::OnJumpFrom(PlayerDoodle& other)
 {
 	switch (type) {
-	case PlatformType::PT_OneOff:
+	case PT::OneOff:
 		bIsActive = false;
 		break;
-	case PlatformType::PT_Trampoline:
+	case PT::Trampoline:
 		DJLog("Trampoline : added impulse");
 		other.AddImpulse({ 0.f, trampolineImpulse }, 0.f);
 		timeFromAnimStart = 0.f;
@@ -161,7 +161,7 @@ bool AnimatedPlatform::DrawIfActive_Internal()
 	int spriteToDraw{ timeFromAnimStart < 0.f ? -1 :
 			static_cast<int>(timeFromAnimStart * animSprites.size() / animationDuration) };
 
-	if (type == PlatformType::PT_Trampoline) {
+	if (type == PT::Trampoline) {
 		if (framework.IsOutOfSideBorder(position, defaultSprite.sprite, true) == 0) {
 			defaultSprite.Draw(position);
 		}
@@ -171,7 +171,7 @@ bool AnimatedPlatform::DrawIfActive_Internal()
 	else {
 		if (spriteToDraw == -1) {
 			defaultSprite.Draw(position);
-			if (type == PlatformType::PT_Invisible && timeFromAnimStart < 0.f && 
+			if (type == PT::Invisible && timeFromAnimStart < 0.f && 
 				position.y > framework.GetSize().y * invisibleAnimTriggerDist) {
 				timeFromAnimStart = 0.f;
 			}
@@ -185,13 +185,13 @@ bool AnimatedPlatform::DrawIfActive_Internal()
 
 bool AnimatedPlatform::OnAnimEnded()
 {
-	if (type == PlatformType::PT_Trampoline) {
+	if (type == PT::Trampoline) {
 		timeFromAnimStart = -1.f;
 		return false;
 	}
 	else {
-		if (type != PlatformType::PT_Invisible && 
-			type != PlatformType::PT_Weak) {
+		if (type != PT::Invisible && 
+			type != PT::Weak) {
 			bIsActive = false;
 		}
 		return true;

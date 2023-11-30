@@ -11,7 +11,7 @@ public:
 	virtual PlatformType GetPlatformType() const final 
 		{ return type; };
 
-	static float GetMaxTickDeltaTime() { return 0.5f; };
+	static float GetMaxTickDeltaTime() noexcept { return 0.5f; };
 protected:
 	TickablePlatform(DragonJumpFramework& f, PlatformType t) :
 		Platform(f), type{ t } {};

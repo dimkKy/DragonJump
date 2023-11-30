@@ -24,7 +24,7 @@ public:
 		const float& inX, bool modeRelative = false) const override;
 protected:
 	template<class...Args>
-	SteppableOn(const Args&...args) : 
+	SteppableOn(Args&&...args) : 
 		Collidable<TShape>(std::forward<Args>(args)...) {};
 };
 

@@ -13,7 +13,7 @@ public:
 	[[nodiscard]] virtual bool IsActive() override;
 	
 	[[nodiscard]] virtual bool CanBeSteppedOn() const override final 
-		{ return false; } ;
+		{ return false; };
 protected:
 	[[maybe_unused]] virtual bool DrawIfActive_Internal() override;
 	SpriteInfo sprite;

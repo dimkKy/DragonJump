@@ -64,19 +64,19 @@ protected:
 	constexpr static float CalculateJumpHeight();
 	constexpr static float DampInstSpeed(float speed, float dampingMp);
 
-	static constexpr float maxTickDeltaTime = 0.02f;
+	static constexpr float maxTickDeltaTime{ 0.02f };
 
-	static constexpr float knockoutAnimDuration = 0.15f;
-	static constexpr float fallingAnimationDuration = 3.f;
-	static constexpr float mass = 75.f;
-	static constexpr float gravityForce = 400.f;
-	static constexpr float jumpImpulse = -100.f;
-	static constexpr float jumpImpulseDuration = 0.5f;
-	static constexpr float jumpingVelocity = -350.f;
-	static constexpr float minVelocityAndForce = 0.5f;
-	static constexpr float maxVelocityLengthSquared = 400000.f;
-	static constexpr Vector2Df dampingMultiplier = { -0.025f, -0.0001f };
-	static constexpr float standingTime = 0.06f;
+	static constexpr float knockoutAnimDuration{ 0.15 }f;
+	static constexpr float fallingAnimationDuration{ 3.f };
+	static constexpr float mass{ 75.f };
+	static constexpr float gravityForce{ 400.f };
+	static constexpr float jumpImpulse{ -100.f };
+	static constexpr float jumpImpulseDuration{ 0.5f };
+	static constexpr float jumpingVelocity{ -350.f };
+	static constexpr float minVelocityAndForce{ 0.5f };
+	static constexpr float maxVelocityLengthSquared{ 400000.f };
+	static constexpr Vector2Df dampingMultiplier{ -0.025f, -0.0001f };
+	static constexpr float standingTime{ 0.06f };
 
 	// should be inside ability classes
 	std::vector<SpriteInfo> jetSprites;

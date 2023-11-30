@@ -245,19 +245,27 @@ struct SpriteInfo {
 	Vector2Df offset;
 
 	void Draw(const Vector2Df& vector) const {
-		drawSprite(sprite.get(), static_cast<int>(vector.x - offset.x + 0.5f), static_cast<int>(vector.y - offset.y + 0.5f));
+		drawSprite(sprite.get(), 
+			static_cast<int>(vector.x - offset.x + 0.5f), 
+			static_cast<int>(vector.y - offset.y + 0.5f));
 	};
 
 	void Draw(const float& posX, const float& posY) const {
-		drawSprite(sprite.get(), static_cast<int>(posX - offset.x + 0.5f), static_cast<int>(posY - offset.y + 0.5f));
+		drawSprite(sprite.get(), 
+			static_cast<int>(posX - offset.x + 0.5f), 
+			static_cast<int>(posY - offset.y + 0.5f));
 	};
 
 	void Draw(const Vector2D& vector) const {
-		drawSprite(sprite.get(), vector.x - static_cast<int>(offset.x + 0.5f), vector.y - static_cast<int>(offset.y + 0.5f));
+		drawSprite(sprite.get(), 
+			vector.x - static_cast<int>(offset.x + 0.5f), 
+			vector.y - static_cast<int>(offset.y + 0.5f));
 	};
 
 	void Draw(const int& posX, const int& posY) const {
-		drawSprite(sprite.get(), posX - static_cast<int>(offset.x + 0.5f), posY - static_cast<int>(offset.y + 0.5f));
+		drawSprite(sprite.get(), 
+			posX - static_cast<int>(offset.x + 0.5f), 
+			posY - static_cast<int>(offset.y + 0.5f));
 	};
 
 	void Reset() {
@@ -409,9 +417,9 @@ protected:
 	int lastDisplayedJumps;
 
 #ifdef NDEBUG
-	static constexpr int abilityCost = 5;
+	static constexpr int abilityCost{ 5 };
 #else
-	static constexpr int abilityCost = 3;
+	static constexpr int abilityCost{ 3 };
 #endif
 
 	template<class TDrawable>

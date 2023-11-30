@@ -28,10 +28,10 @@ protected:
 	float dyingAnimationTime;
 	float idleAnimationTime;
 
-	static constexpr float knockoutAnimDuration = 3.f;
-	static constexpr float idleAnimationPeriod = 2.f;
-	static constexpr float dyingAnimationDuration = 0.25f;
-	static constexpr float dyingVerticalSpeed = 150.f;
-	static constexpr float idleAnimAmplitudeMp = 0.35f;
-	static constexpr float movableMonsterXSpeed = 100.f;
+	static constexpr float knockoutAnimDuration{ 3.f };
+	static constexpr float idleAnimationPeriod{ 2.f };
+	static constexpr float dyingAnimationDuration{ 0.25f };
+	static constexpr float dyingVerticalSpeed{ 150.f };
+	static constexpr float idleAnimAmplitudeMp{ 0.35f };
+	static constexpr float movableMonsterXSpeed{ 100.f };
 };

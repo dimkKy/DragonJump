@@ -5,6 +5,7 @@
 #include "DragonJumpFramework.h"
 
 //maybe should have gone with singleton after all
+//should habe used crtp mixins
 class Drawable
 {
 public:
@@ -25,15 +26,15 @@ public:
 		{ bIsActive = false; };
 
 	template<class TDrawable>
-		requires std::is_base_of<Drawable, TDrawable>::value
+		requires std::is_base_of_v<Drawable, TDrawable>
 	static void DispatchDrawcalls(float cameraVerticalOffset, std::vector<std::shared_ptr<TDrawable>>& vec) {
 		for (auto& drawable : vec) {
 			drawable->DrawIfActive(cameraVerticalOffset);
 		}
 	}
 	template<typename FDrawable, typename...SDrawable>
-		requires std::is_base_of<Drawable, FDrawable>::value && 
-		((std::is_base_of<Drawable, SDrawable>::value) &&...)
+		requires std::is_base_of_v<Drawable, FDrawable> && 
+		((std::is_base_of_v<Drawable, SDrawable>) &&...)
 	static void DispatchDrawcalls(float cameraVerticalOffset, std::vector<std::shared_ptr<FDrawable>>& vec, 
 		std::vector<std::shared_ptr<SDrawable>>&...vecs) {
 		for (auto& drawable : vec) {
@@ -46,8 +47,8 @@ public:
 
 protected:
 	template<class...Args>
-	Drawable(DragonJumpFramework& _framework, const Args&...args) : 
-		framework{ _framework }, bIsActive{ true }, position{ args... } {};
+	Drawable(DragonJumpFramework& _framework, Args&&...args) : 
+		framework{ _framework }, bIsActive{ true }, position{ std::forward<Args>(args)... } {};
 	virtual bool DrawIfActive_Internal() = 0;
 	DragonJumpFramework& framework;
 	bool bIsActive;

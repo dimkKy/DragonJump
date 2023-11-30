@@ -6,7 +6,7 @@
 #include <cassert>
 
 Hole::Hole(DragonJumpFramework& _framework, const Vector2Df& _position) :
-	Drawable(_framework, _position), Monster(MonsterType::MT_Hole)
+	Drawable(_framework, _position), Monster(MT::Hole)
 {
 	if (framework.GetSpriteInfo(SpritePaths::hole, sprite)) {
 		sprite.offset *= 0.5f;

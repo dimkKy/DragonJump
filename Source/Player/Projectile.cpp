@@ -47,7 +47,7 @@ bool Projectile::IsActive()
 
 void Projectile::ReceiveCollision(CollidableBase& other)
 {
-	if (other.GetCollisionChannel() == CollisionChannel::CC_Monster) {
+	if (other.GetCollisionChannel() == CC::Monster) {
 		bIsActive = false;
 	}
 }

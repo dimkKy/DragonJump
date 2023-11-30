@@ -296,12 +296,12 @@ void DragonJumpFramework::TryAddEntities()
 		lastPlatformPos.y -= distMain(rnd) * PlayerDoodle::jumpHeight;
 		lastPlatformPos.x = std::fmodf(lastPlatformPos.x + distMain(rnd) * screenSize.x,
 			static_cast<float>(screenSize.x));
-		Platform* newP{ SpawnPlatform(lastPlatformPos, PlatformType::PT_Default) };
+		Platform* newP{ SpawnPlatform(lastPlatformPos, PT::Default) };
 		if (!newP)
 			return;
 
 		int randint{ prcnt(rnd) };
-		if (auto type{ GetPlatformType(randint) }; type != PlatformType::PT_COUNT) {
+		if (auto type{ GetPlatformType(randint) }; type != PT::PT_COUNT) {
 			Vector2Df addSpawnPos{ lastPlatformPos.x + distMain(rnd) * screenSize.x, 
 				lastPlatformPos.y - distAdd(rnd) * PlayerDoodle::jumpHeight };
 			addSpawnPos.x = std::fmodf(addSpawnPos.x, static_cast<float>(screenSize.x));
@@ -318,7 +318,7 @@ void DragonJumpFramework::TryAddEntities()
 			}
 			SpawnAbility(*newP, type);
 		}
-		if (MonsterType type{ GetMonsterType(randint) }; type != MonsterType::MT_COUNT) {
+		if (MonsterType type{ GetMonsterType(randint) }; type != MT::COUNT) {
 			SpawnMonster(*newP, type);
 		}
 	}
@@ -327,35 +327,35 @@ void DragonJumpFramework::TryAddEntities()
 PlatformType DragonJumpFramework::GetPlatformType(int seed)
 {
 	if (seed % 3 == 0) {
-		return PlatformType::PT_Weak;
+		return PT::Weak;
 	}
 	if (seed % 5 == 0) {
-		return PlatformType::PT_Trampoline;
+		return PT::Trampoline;
 	}
 	if (seed % 6 == 0 || seed % 23 == 0) {
-		return PlatformType::PT_OneOff;
+		return PT::OneOff;
 	}
 	if (seed % 7 == 0 || seed % 29 == 0) {
-		return PlatformType::PT_Invisible;
+		return PT::Invisible;
 	}
 	if (seed % 11 == 0 || seed % 37 == 0 || seed % 41 == 0) {
-		return PlatformType::PT_SelfDestuct;
+		return PT::SelfDestuct;
 	}
-	return PlatformType::PT_COUNT;
+	return PT::PT_COUNT;
 }
 
 MonsterType DragonJumpFramework::GetMonsterType(int seed)
 {
 	if (seed % 12 == 0 || seed % 43 == 0) {
-		return MonsterType::MT_Hole;
+		return MT::Hole;
 	}
 	if (seed % 14 == 0 || seed % 47 == 0) {
-		return MonsterType::MT_Static;
+		return MT::Static;
 	}
 	if (seed % 18 == 0 || seed % 53 == 0) {
-		return MonsterType::MT_Movable;
+		return MT::Movable;
 	}
-	return MonsterType::MT_COUNT;
+	return MT::COUNT;
 }
 
 void DragonJumpFramework::SpawnStartingScene()
@@ -363,26 +363,26 @@ void DragonJumpFramework::SpawnStartingScene()
 	Vector2Df platPos{ playerDoodle->GetPosition() };
 	platPos.y -= PlayerDoodle::jumpHeight;
 	if (bInMenu) {
-		SpawnPlatform(platPos, PlatformType::PT_Default);
+		SpawnPlatform(platPos, PT::Default);
 		platPos.y -= PlayerDoodle::jumpHeight;
-		SpawnPlatform(platPos, PlatformType::PT_Weak);
+		SpawnPlatform(platPos, PT::Weak);
 	}
 	else {
 		int platformNumber{ static_cast<int>(platformsInScreenWidth) };
 		float platformWidth{ screenSize.x / platformsInScreenWidth };
 		float spawnPositionX{ (screenSize.x - ( platformNumber - 1 ) * platformWidth) * 0.5f };
 		for (auto i{ 0 }; i < platformNumber; i++) {
-			SpawnPlatform({ spawnPositionX, platPos.y }, PlatformType::PT_Default);
+			SpawnPlatform({ spawnPositionX, platPos.y }, PT::Default);
 			spawnPositionX += platformWidth;
 		}
 		//still ugly
 		SpawnAbility(*platforms.back().get(), AbilityType::AT_Jet, 0);
-		SpawnPlatform({ screenSize.x * 0.25f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f}, PlatformType::PT_Invisible);
-		SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PlatformType::PT_OneOff);	
+		SpawnPlatform({ screenSize.x * 0.25f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f}, PT::Invisible);
+		SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PT::OneOff);	
 		SpawnMonster(
-			*SpawnPlatform({ screenSize.x * 0.75f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PlatformType::PT_Trampoline),
-			MonsterType::MT_Movable);
-		SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PlatformType::PT_SelfDestuct);
+			*SpawnPlatform({ screenSize.x * 0.75f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PT::Trampoline),
+			MT::Movable);
+		SpawnPlatform({ screenSize.x * 0.5f, platPos.y -= PlayerDoodle::jumpHeight * 0.75f }, PT::SelfDestuct);
 		lastPlatformPos.y = platPos.y;
 		TryAddEntities();
 	}
@@ -564,7 +564,7 @@ Platform* DragonJumpFramework::SpawnPlatform(Vector2Df pos, PlatformType type)
 		&& "attempted spawn outside screen size");
 	float platformHalfSize{ screenSize.x / platformsInScreenWidth * 0.5f };
 	pos.x = std::clamp(pos.x, platformHalfSize, screenSize.x - platformHalfSize);
-	if (type == PlatformType::PT_Default) {
+	if (type == PT::Default) {
 		for (auto& platform : platforms) {
 			if (!platform->IsActive() && platform->Reactivate(pos)) {
 				return platform.get();
@@ -576,7 +576,7 @@ Platform* DragonJumpFramework::SpawnPlatform(Vector2Df pos, PlatformType type)
 			return t.get();
 		}
 	}
-	if (type > PlatformType::PT_Default && type < PlatformType::PT_Vertical) {
+	if (type > PT::Default && type < PT::Vertical) {
 		for (auto& platform : tickablePlatforms) {
 			if (platform->GetPlatformType() == type &&
 				!platform->IsActive() && platform->Reactivate(pos)) {
@@ -597,7 +597,7 @@ MonsterBase* DragonJumpFramework::SpawnMonster(const Platform& target, MonsterTy
 	Vector2Df pos{ target.GetPosition() };
 	assert(pos.x >= 0.f && pos.x <= screenSize.x && 
 		pos.y <= screenSize.y && "attempted spawn outside screen size");
-	if (type == MonsterType::MT_Hole) {
+	if (type == MT::Hole) {
 		pos.y += target.GetCollisionInfo().halfSize.y;
 		for (auto& monster : holes) {
 			if (!monster->IsActive() && monster->Reactivate(pos)) {
@@ -610,7 +610,7 @@ MonsterBase* DragonJumpFramework::SpawnMonster(const Platform& target, MonsterTy
 		}
 		return nullptr;
 	}
-	if (type < MonsterType::MT_COUNT) {
+	if (type < MT::COUNT) {
 		pos.y -= target.GetCollisionInfo().halfSize.y;
 		for (auto& monster : tickableMonsters) {
 			if (monster->GetMonsterType() == type && 

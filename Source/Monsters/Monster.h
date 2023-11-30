@@ -5,11 +5,17 @@
 #include "SteppableOn.h"
 
 enum class MonsterType {
-	MT_Hole,
-	MT_Static,
-	MT_Movable,
-	MT_COUNT
+	Hole,
+	Static,
+	Movable,
+	COUNT
 };
+
+namespace MT {
+	inline constexpr PlatformType Hole{ MonsterType::Hole };
+	inline constexpr PlatformType Static{ MonsterType::Static };
+	inline constexpr PlatformType Movable{ MonsterType::Movable };
+}
 
 class MonsterBase {
 public:
@@ -26,11 +32,11 @@ class Monster : public SteppableOn<TShape>, public MonsterBase
 {
 public:
 	virtual CollisionChannel GetCollisionChannel() const override 
-		{ return CollisionChannel::CC_Monster; };
+		{ return CC::Monster; };
 
 	virtual bool GetCollisionResponse(CollisionChannel channel) const override {
-		return channel == CollisionChannel::CC_Projectile || 
-			channel == CollisionChannel::CC_Player; 
+		return channel == CC::Projectile || 
+			channel == CC::Player; 
 	};
 	
 protected:

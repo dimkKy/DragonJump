@@ -25,12 +25,12 @@ protected:
 	float animationDuration;
 	float timeFromAnimStart;
 
-	static constexpr float fallingAcceleration = 200.f;
-	static constexpr float trampolineImpulse = -125.f;
-	static constexpr float defaultAnimDuration = 0.75f;
-	static constexpr float selfDestuctAnimDuration = 1.75f;
-	static constexpr float invisibleAnimDuration = 2.f;
-	static constexpr float selfDestuctTriggerDistMp = 4.f;
-	static constexpr float invisibleAnimTriggerDist = 0.2f;
+	static constexpr float fallingAcceleration{ 200.f };
+	static constexpr float trampolineImpulse{ -125.f };
+	static constexpr float defaultAnimDuration{ 0.75f };
+	static constexpr float selfDestuctAnimDuration{ 1.75f };
+	static constexpr float invisibleAnimDuration{ 2.f };
+	static constexpr float selfDestuctTriggerDistMp{ 4.f };
+	static constexpr float invisibleAnimTriggerDist{ 0.2f };
 };
 

@@ -28,17 +28,17 @@ public:
 	virtual bool Reactivate(const Vector2Df& pos) & override;
 	
 	virtual CollisionChannel GetCollisionChannel() const override 
-		{ return CollisionChannel::CC_Pikup; };
+		{ return CC::Pickup; };
 	virtual bool GetCollisionResponse(CollisionChannel channel) const override 
-		{ return channel == CollisionChannel::CC_Player; };
+		{ return channel == CC::Player; };
 	void ReceiveCollision(Collidable& other) {};
 
-	static constexpr float jetAnimDuration = 0.75f;
+	static constexpr float jetAnimDuration{ 0.75f };
 protected:
 	virtual bool DrawIfActive_Internal() override;
 	SpriteInfo sprite;
 	AbilityType type;
 
-	static constexpr float jetForce = -55000.f;
+	static constexpr float jetForce{ -55000.f };
 };
 

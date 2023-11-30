@@ -13,10 +13,10 @@ TickableMonster::TickableMonster(DragonJumpFramework& _framework, const Vector2D
 	std::string path;
 	int desiredSpriteNumber{ 2 };
 	switch (type) {
-	case MonsterType::MT_Static:
+	case MT::Static:
 		path = SpritePaths::staticMonster;
 		break;
-	case MonsterType::MT_Movable:
+	case MT::Movable:
 		path = SpritePaths::movableMonster;
 		velocity.x = movableMonsterXSpeed;
 		break;
@@ -34,7 +34,7 @@ TickableMonster::TickableMonster(DragonJumpFramework& _framework, const Vector2D
 	}
 	else {
 		bIsActive = false;
-		type = MonsterType::MT_COUNT;
+		type = MT::COUNT;
 	}
 	assert(bIsActive && "TickableMonster : sprites init failed");
 }
@@ -74,7 +74,7 @@ void TickableMonster::ReceiveCollision(CollidableBase& other)
 		}
 		dyingAnimationTime = 0.f;
 		velocity = 0.f;
-		if (type == MonsterType::MT_Static) {
+		if (type == MT::Static) {
 			spriteToDraw = static_cast<int>(spriteInfos.size()) - 1;
 		}
 		framework.IncreaseMonstersKilledCounter();
@@ -142,7 +142,7 @@ void TickableMonster::ReceiveTick(float deltaTime) &
 
 bool TickableMonster::Reactivate(const Vector2Df& pos) &
 {
-	if (type == MonsterType::MT_COUNT) {
+	if (type == MT::COUNT) {
 		bIsActive = false;
 		return false;
 	}
@@ -150,7 +150,7 @@ bool TickableMonster::Reactivate(const Vector2Df& pos) &
 	position.x = pos.x;
 	position.y = pos.y - collisionInfo.halfSize.y * 1.1f;
 	switch (type) {
-	case MonsterType::MT_Movable:
+	case MT::Movable:
 		velocity.y = 0.f;
 		velocity.x = movableMonsterXSpeed;
 		break;

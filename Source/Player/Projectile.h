@@ -22,14 +22,14 @@ public:
 	virtual void ReceiveTick(float deltaTime) & override;
 
 	virtual CollisionChannel GetCollisionChannel() const override 
-		{ return CollisionChannel::CC_Projectile; };
+		{ return CC::Projectile; };
 	virtual bool GetCollisionResponse(CollisionChannel channel) const override 
-		{ return channel == CollisionChannel::CC_Monster; };
+		{ return channel == CC::Monster; };
 	virtual void ReceiveCollision(CollidableBase& other) override;
 	
 protected:
 	virtual bool DrawIfActive_Internal() override;
 	SpriteInfo sprite;
 
-	static constexpr float projectileSpeed = 500.f;
+	static constexpr float projectileSpeed{ 500.f };
 };

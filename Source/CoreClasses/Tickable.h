@@ -14,7 +14,7 @@ public:
 	[[nodiscard]] virtual float GetMaxTickDeltaTime() const 
 		{ return 0.f; };
 	template<typename TTickable>
-		requires std::is_base_of<Tickable, TTickable>::value
+		requires std::is_base_of_v<Tickable, TTickable>
 	static void DispatchTicks(float deltaTime, std::vector<std::shared_ptr<TTickable>>& vec) {
 		for (auto& tickable : vec) {
 			if (tickable->IsActive()) {
@@ -24,8 +24,8 @@ public:
 	}
 
 	template<typename FTickable, typename...STickable>
-		requires std::is_base_of<Tickable, FTickable>::value &&
-		((std::is_base_of<Tickable, STickable>::value) &&...)
+		requires std::is_base_of_v<Tickable, FTickable> &&
+		((std::is_base_of_v<Tickable, STickable>) &&...)
 		static void DispatchTicks(float deltaTime, std::vector<std::shared_ptr<FTickable>>& vec,
 			std::vector<std::shared_ptr<STickable>>&...vecs) {
 		for(auto & tickable : vec) {
@@ -37,8 +37,8 @@ public:
 	}
 protected:
 	template<class...Args>
-	Tickable(const Args&...args) : 
-		velocity{ args... } {};
+	Tickable(Args&&...args) : 
+		velocity{ std::forward<Args>(args)... } {};
 	Vector2Df velocity;
 };
 
